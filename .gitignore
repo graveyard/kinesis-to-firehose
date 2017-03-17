@@ -6,3 +6,7 @@
 *~
 \#*\#
 .\#*
+jars/
+build/
+
+vendor/
