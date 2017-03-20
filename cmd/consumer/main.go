@@ -151,8 +151,8 @@ func main() {
 	defer f.Close()
 
 	config := firehose.FirehoseWriterConfig{
-		StreamName:    getEnv("FIREHOSE_STREAM"),
-		Region:        getEnv("FIREHOSE_REGION"),
+		StreamName:    getEnv("FIREHOSE_STREAM_NAME"),
+		Region:        getEnv("FIREHOSE_AWS_REGION"),
 		FlushInterval: 10000,
 		FlushCount:    100,
 	}
