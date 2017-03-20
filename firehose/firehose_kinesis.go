@@ -2,7 +2,6 @@ package firehose
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"sync/atomic"
 
@@ -22,8 +21,8 @@ type FirehoseWriter struct {
 }
 
 type FirehoseWriterConfig struct {
-	// The value of this field is used as the firehose `series` (or stream) name
-	SeriesField string `toml:"series_field"`
+	// The value of this field is used as the firehose stream name
+	StreamName string
 	// AWS region the stream lives in
 	Region string `toml:"region"`
 	// Interval at which accumulated messages should be bulk put to
@@ -51,19 +50,7 @@ func NewFirehoseWriter(config FirehoseWriterConfig, mockEndpoint string) (*Fireh
 func (f *FirehoseWriter) ProcessMessage(msg string) error {
 	atomic.AddInt64(&f.recvRecordCount, 1)
 
-	seriesName := "log-archive-test"
-
 	fields := convertToFields(msg)
-
-	if seriesName == "" {
-		atomic.AddInt64(&f.droppedRecordCount, 1)
-		return errors.New("No series name found in message")
-	}
-
-	if len(fields) == 0 {
-		atomic.AddInt64(&f.droppedRecordCount, 1)
-		return errors.New("No fields found in message")
-	}
 
 	record, err := json.Marshal(fields)
 	if err != nil {
@@ -71,11 +58,11 @@ func (f *FirehoseWriter) ProcessMessage(msg string) error {
 		return err
 	}
 
-	batch, ok := f.batchers[seriesName]
+	batch, ok := f.batchers[f.conf.StreamName]
 	if !ok {
-		sync := f.createBatcherSync(seriesName)
+		sync := f.createBatcherSync(f.conf.StreamName)
 		batch = batcher.New(sync)
-		f.batchers[seriesName] = batch
+		f.batchers[f.conf.StreamName] = batch
 	}
 	batch.Send(record)
 

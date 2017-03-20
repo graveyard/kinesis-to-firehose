@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/base64"
 	"fmt"
+	"log"
 	"math/big"
 	"os"
 	"time"
@@ -33,18 +34,6 @@ func New() *RecordProcessor {
 
 func (rp *RecordProcessor) Initialize(shardID string) error {
 	rp.shardID = shardID
-
-	config := firehose.FirehoseWriterConfig{
-		Region:        "us-west-2",
-		FlushInterval: 10000,
-		FlushCount:    100,
-	}
-	writer, err := firehose.NewFirehoseWriter(config, "")
-	if err != nil {
-		return err
-	}
-	rp.firehoseWriter = writer
-
 	rp.lastCheckpoint = time.Now()
 	return nil
 }
@@ -151,6 +140,9 @@ func (rp *RecordProcessor) Shutdown(checkpointer kcl.Checkpointer, reason string
 	return nil
 }
 
+var streamName string
+var awsRegion string
+
 func main() {
 	f, err := os.Create("/tmp/kcl_stderr")
 	if err != nil {
@@ -158,7 +150,26 @@ func main() {
 	}
 	defer f.Close()
 
-	// TODO: Read configuration from environment
-	kclProcess := kcl.New(os.Stdin, os.Stdout, os.Stderr, &RecordProcessor{})
+	config := firehose.FirehoseWriterConfig{
+		StreamName:    getEnv("FIREHOSE_STREAM"),
+		Region:        getEnv("FIREHOSE_REGION"),
+		FlushInterval: 10000,
+		FlushCount:    100,
+	}
+	writer, err := firehose.NewFirehoseWriter(config, "")
+	if err != nil {
+		log.Fatalf("Failed to create FirehoseWriter: %s", err.Error())
+	}
+
+	kclProcess := kcl.New(os.Stdin, os.Stdout, os.Stderr, &RecordProcessor{firehoseWriter: writer})
 	kclProcess.Run()
+}
+
+// getEnv looks up an environment variable given and exits if it does not exist.
+func getEnv(envVar string) string {
+	val := os.Getenv(envVar)
+	if val == "" {
+		log.Fatalf("Must specify env variable %s", envVar)
+	}
+	return val
 }
