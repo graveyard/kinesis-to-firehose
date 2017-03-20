@@ -48,7 +48,16 @@ $(GOPATH)/bin/glide:
 install_deps: $(GOPATH)/bin/glide
 	@$(GOPATH)/bin/glide install
 
-kinesis_consumer:
+
+KINESIS_STREAM_NAME ?= logs-test
+KINESIS_AWS_REGION ?= us-west-1
+
+consumer_properties:
+	cp consumer.properties.template consumer.properties
+	sed -i '.bak' 's/<STREAM_NAME>/$(KINESIS_STREAM_NAME)/' consumer.properties
+	sed -i '.bak' 's/<REGION_NAME>/$(KINESIS_AWS_REGION)/' consumer.properties
+
+kinesis_consumer: consumer_properties
 	command -v java >/dev/null 2>&1 || { echo >&2 "Java not installed. Install java!"; exit 1; }
 	java -cp $(JAVA_CLASS_PATH) com.amazonaws.services.kinesis.multilang.MultiLangDaemon consumer.properties
 
