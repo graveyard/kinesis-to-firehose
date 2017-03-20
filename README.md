@@ -4,13 +4,7 @@ Consumes records from Kinesis and writes to Firehose.
 
 ## Running the Consumer
 
-Build the consumer binary:
-
-``` bash
-make build
-```
-
-Then run, setting env vars as appropriate for your Kinesis input stream and Firehose output stream.
+To build and run the consumer, set env vars for your Kinesis input stream and Firehose output stream and run `make run`.
 
 ``` bash
 KINESIS_AWS_REGION=us-west-1 \
@@ -21,3 +15,7 @@ make run
 ```
 
 This will download the jar files necessary to run the KCL, and then launch the KCL communicating with the consumer binary.
+
+### Running at Clever
+
+You can also use `ark` to run locally, via `ark start --local`
