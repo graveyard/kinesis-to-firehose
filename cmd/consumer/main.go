@@ -59,10 +59,13 @@ func (rp *RecordProcessor) checkpoint(checkpointer kcl.Checkpointer, sequenceNum
 			}
 		}
 
+		if n == rp.checkpointRetries-1 {
+			fmt.Fprintf(os.Stderr, "Failed to checkpoint after %d attempts, giving up.\n", rp.checkpointRetries)
+			return
+		}
+
 		time.Sleep(rp.sleepDuration)
 	}
-
-	fmt.Fprintf(os.Stderr, "Failed to checkpoint after %d attempts, giving up.\n", rp.checkpointRetries)
 }
 
 func (rp *RecordProcessor) shouldUpdateSequence(sequenceNumber *big.Int, subSequenceNumber int) bool {
