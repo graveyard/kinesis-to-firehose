@@ -55,6 +55,7 @@ KINESIS_AWS_REGION ?= us-west-1
 # we want a dif application for local, dev, and prod, so that they don't conflict
 # (e.g. app name determines the DynamoDB table that KCL uses to coordinate)
 KINESIS_APPLICATION_NAME ?= kinesis-to-firehose-local
+LOG_FILE ?= "/tmp/kcl_stderr"
 
 consumer_properties:
 	cp consumer.properties.template consumer.properties

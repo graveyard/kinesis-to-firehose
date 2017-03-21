@@ -106,7 +106,7 @@ func (rp *RecordProcessor) ProcessRecords(records []kcl.Record, checkpointer kcl
 		rp.lastCheckpoint = time.Now()
 
 		// Write status to file
-		err := appendToFile("/tmp/kcl_stderr", fmt.Sprintf("%s -- %+v\n", rp.shardID, rp.firehoseWriter.Status()))
+		err := appendToFile(logFile, fmt.Sprintf("%s -- %+v\n", rp.shardID, rp.firehoseWriter.Status()))
 		if err != nil {
 			return err
 		}
@@ -139,11 +139,12 @@ func (rp *RecordProcessor) Shutdown(checkpointer kcl.Checkpointer, reason string
 	return nil
 }
 
-var streamName string
-var awsRegion string
+var logFile = "/tmp/kcl_stderr"
 
 func main() {
-	f, err := os.Create("/tmp/kcl_stderr")
+	logFile := getEnv("LOG_FILE")
+
+	f, err := os.Create(logFile)
 	if err != nil {
 		panic(err)
 	}
