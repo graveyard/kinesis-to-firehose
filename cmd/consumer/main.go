@@ -39,9 +39,9 @@ func (rp *RecordProcessor) Initialize(shardID string) error {
 }
 
 func (rp *RecordProcessor) checkpoint(checkpointer kcl.Checkpointer, sequenceNumber string, subSequenceNumber int) {
-	var err error
 	for n := 0; n < rp.checkpointRetries; n++ {
-		if err = checkpointer.Checkpoint(sequenceNumber, subSequenceNumber); err == nil {
+		err := checkpointer.Checkpoint(sequenceNumber, subSequenceNumber)
+		if err == nil {
 			return
 		}
 
