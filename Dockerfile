@@ -7,6 +7,7 @@ ADD Makefile .
 RUN make download_jars
 
 # build
+ADD consumer.properties.template .
 ADD ./build/consumer ./build/consumer
 
 CMD ["make", "run_kinesis_consumer"]
