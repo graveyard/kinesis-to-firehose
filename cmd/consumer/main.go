@@ -68,6 +68,7 @@ func (rp *RecordProcessor) checkpoint(checkpointer kcl.Checkpointer, sequenceNum
 	}
 }
 
+// shouldUpdateSequence determines whether a new larger sequence number is available
 func (rp *RecordProcessor) shouldUpdateSequence(sequenceNumber *big.Int, subSequenceNumber int) bool {
 	return rp.largestSeq == nil || sequenceNumber.Cmp(rp.largestSeq) == 1 ||
 		(sequenceNumber.Cmp(rp.largestSeq) == 0 && subSequenceNumber > rp.largestSubSeq)
