@@ -39,29 +39,30 @@ func (rp *RecordProcessor) Initialize(shardID string) error {
 }
 
 func (rp *RecordProcessor) checkpoint(checkpointer kcl.Checkpointer, sequenceNumber string, subSequenceNumber int) {
+	var err error
 	for n := 0; n < rp.checkpointRetries; n++ {
-		if err := checkpointer.Checkpoint(sequenceNumber, subSequenceNumber); err == nil {
-			break
-		} else {
-			if cperr, ok := err.(kcl.CheckpointError); ok {
-				switch cperr.Error() {
-				case "ShutdownException":
-					fmt.Fprintf(os.Stderr, "Encountered shutdown exception, skipping checkpoint\n")
-					return
-				case "ThrottlingException":
-					if rp.checkpointRetries-1 == n {
-						fmt.Fprintf(os.Stderr, "Failed to checkpoint after %d attempts, giving up.\n", n)
-						return
-					}
-					fmt.Fprintf(os.Stderr, "Was throttled while checkpointing, will attempt again in %s", rp.sleepDuration)
-				case "InvalidStateException":
-					fmt.Fprintf(os.Stderr, "MultiLangDaemon reported an invalid state while checkpointing\n")
-				}
-			}
-			fmt.Fprintf(os.Stderr, "Encountered an error while checkpointing: %s", err)
+		if err = checkpointer.Checkpoint(sequenceNumber, subSequenceNumber); err == nil {
+			return
 		}
+
+		if cperr, ok := err.(kcl.CheckpointError); ok {
+			switch cperr.Error() {
+			case "ShutdownException":
+				fmt.Fprintf(os.Stderr, "Encountered shutdown exception, skipping checkpoint\n")
+				return
+			case "ThrottlingException":
+				fmt.Fprintf(os.Stderr, "Was throttled while checkpointing, will attempt again in %s", rp.sleepDuration)
+			case "InvalidStateException":
+				fmt.Fprintf(os.Stderr, "MultiLangDaemon reported an invalid state while checkpointing\n")
+			default:
+				fmt.Fprintf(os.Stderr, "Encountered an error while checkpointing: %s", err)
+			}
+		}
+
 		time.Sleep(rp.sleepDuration)
 	}
+
+	fmt.Fprintf(os.Stderr, "Failed to checkpoint after %d attempts, giving up.\n", rp.checkpointRetries)
 }
 
 func (rp *RecordProcessor) shouldUpdateSequence(sequenceNumber *big.Int, subSequenceNumber int) bool {
