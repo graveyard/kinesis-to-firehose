@@ -9,4 +9,4 @@ RUN make download_jars
 # build
 ADD ./build/consumer ./build/consumer
 
-CMD ["make", "kinesis_consumer"]
+CMD ["make", "run_kinesis_consumer"]
