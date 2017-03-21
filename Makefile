@@ -51,20 +51,16 @@ install_deps: $(GOPATH)/bin/glide
 
 KINESIS_STREAM_NAME ?= logs-test
 KINESIS_AWS_REGION ?= us-west-1
-
 # sets the `applicationName` in KCL consume.properties.
-# we want a dif application in Dev and Prod, so that they don't conflict
+# we want a dif application for local, dev, and prod, so that they don't conflict
 # (e.g. app name determines the DynamoDB table that KCL uses to coordinate)
-APPLICATION_NAME ?= kinesis-to-firehose-dev
-ifeq ($(_DEPLOY_ENV), production)
-	APPLICATION_NAME = kinesis-to-firehose
-endif
+KINESIS_APPLICATION_NAME ?= kinesis-to-firehose-local
 
 consumer_properties:
 	cp consumer.properties.template consumer.properties
 	sed -i '.bak' 's/<STREAM_NAME>/$(KINESIS_STREAM_NAME)/' consumer.properties
 	sed -i '.bak' 's/<REGION_NAME>/$(KINESIS_AWS_REGION)/' consumer.properties
-	sed -i '.bak' 's/<APPLICATION_NAME>/$(APPLICATION_NAME)/' consumer.properties
+	sed -i '.bak' 's/<APPLICATION_NAME>/$(KINESIS_APPLICATION_NAME)/' consumer.properties
 
 kinesis_consumer: consumer_properties
 	command -v java >/dev/null 2>&1 || { echo >&2 "Java not installed. Install java!"; exit 1; }
