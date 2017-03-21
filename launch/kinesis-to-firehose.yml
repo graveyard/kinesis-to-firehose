@@ -1,10 +1,16 @@
-run:
-  type: docker
-env: []
+env:
+- AWS_ACCESS_KEY_ID
+- AWS_SECRET_ACCESS_KEY
+- KINESIS_AWS_REGION
+- KINESIS_STREAM_NAME
+- KINESIS_APPLICATION_NAME
+- FIREHOSE_AWS_REGION
+- FIREHOSE_STREAM_NAME
+- LOG_FILE
 resources:
-  cpu: 0.1
-  max_mem: 0.1
+  cpu: 1.0
+  max_mem: 0.5
 shepherds:
 - "nathan.leiby@clever.com"
 expose: []
-team: "TODO"
+team: "eng-infra"

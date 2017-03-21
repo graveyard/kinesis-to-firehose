@@ -6,3 +6,9 @@
 *~
 \#*\#
 .\#*
+jars/
+build/
+consumer.properties
+consumer.properties.bak
+
+vendor/
