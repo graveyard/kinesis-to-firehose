@@ -6,6 +6,7 @@ env:
 - KINESIS_APPLICATION_NAME
 - FIREHOSE_AWS_REGION
 - FIREHOSE_STREAM_NAME
+- LOG_FILE
 resources:
   cpu: 1.0
   max_mem: 0.5
