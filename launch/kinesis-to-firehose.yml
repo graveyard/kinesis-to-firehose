@@ -9,7 +9,7 @@ env:
 - LOG_FILE
 resources:
   cpu: 1.0
-  max_mem: 0.5
+  max_mem: 2.0
 shepherds:
 - "nathan.leiby@clever.com"
 expose: []
