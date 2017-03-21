@@ -114,7 +114,6 @@ func (rp *RecordProcessor) ProcessRecords(records []kcl.Record, checkpointer kcl
 	return nil
 }
 
-// func base64decode(
 func appendToFile(filename, text string) error {
 	f, err := os.OpenFile(filename, os.O_APPEND|os.O_WRONLY, 0600)
 	if err != nil {
