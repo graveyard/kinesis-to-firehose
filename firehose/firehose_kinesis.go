@@ -50,7 +50,10 @@ func NewFirehoseWriter(config FirehoseWriterConfig, mockEndpoint string) (*Fireh
 func (f *FirehoseWriter) ProcessMessage(msg string) error {
 	atomic.AddInt64(&f.recvRecordCount, 1)
 
-	fields := convertToFields(msg)
+	// TODO: Fully decode the message
+	fields := map[string]interface{}{
+		"rawlog": msg,
+	}
 
 	record, err := json.Marshal(fields)
 	if err != nil {
@@ -67,12 +70,6 @@ func (f *FirehoseWriter) ProcessMessage(msg string) error {
 	batch.Send(record)
 
 	return nil
-}
-
-func convertToFields(msg string) map[string]interface{} {
-	return map[string]interface{}{
-		"rawlog": msg,
-	}
 }
 
 func (f *FirehoseWriter) createBatcherSync(seriesName string) batcher.Sync {
