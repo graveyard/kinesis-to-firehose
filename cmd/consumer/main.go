@@ -134,7 +134,7 @@ func (rp *RecordProcessor) Shutdown(checkpointer kcl.Checkpointer, reason string
 		rp.firehoseWriter.FlushAll()
 		rp.checkpoint(checkpointer, "", 0)
 	} else {
-		fmt.Fprintf(os.Stderr, "Shutting down due to failover. Will not checkpoint.\n")
+		fmt.Fprintf(os.Stderr, "Shutting down due to failover. Reason: %s. Will not checkpoint.\n", reason)
 	}
 	return nil
 }
