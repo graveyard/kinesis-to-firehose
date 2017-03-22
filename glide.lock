@@ -1,8 +1,8 @@
-hash: eadbb4139b0f7ed13492e7071071f0d918dbb75f9e0078c36569a1838a27a7ce
-updated: 2017-03-17T14:46:42.034385318-07:00
+hash: 22ca6a3bbe1177f204bf4c58c85778853104fa6d06a4879ab1229fd5e41352db
+updated: 2017-03-22T16:23:18.301726515-07:00
 imports:
 - name: github.com/aws/aws-sdk-go
-  version: f70a8a7d8680992d62277dc6bd76e32a08152ac1
+  version: 819b71cf8430e434c1eee7e7e8b0f2b8870be899
   subpackages:
   - aws
   - aws/awserr
@@ -35,7 +35,7 @@ imports:
   subpackages:
   - kcl
 - name: github.com/Clever/heka-clever-plugins
-  version: a6c5c23afaca604477ea2a6fc609f1882eae5568
+  version: fd3e18929e81329237f543bdc2b63f214b618305
   subpackages:
   - aws
   - batcher
@@ -47,8 +47,28 @@ imports:
   - gomock
 - name: github.com/jmespath/go-jmespath
   version: bd40a432e4c76585ef6b72d3fd96fb9b6dc7b68d
+- name: golang.org/x/net
+  version: b336a971b799939dd16ae9b1df8334cb8b977c4d
+  subpackages:
+  - context
+- name: golang.org/x/time
+  version: f51c12702a4d776e4c1fa9b0fabab841babae631
+  subpackages:
+  - rate
 - name: gopkg.in/Clever/kayvee-go.v3
   version: 056c92dcc68b40c5d6045f755197b3776f914154
   subpackages:
   - logger
-testImports: []
+testImports:
+- name: github.com/davecgh/go-spew
+  version: 6d212800a42e8ab5c146b8ace3490ee17e5225f9
+  subpackages:
+  - spew
+- name: github.com/pmezard/go-difflib
+  version: d8ed2627bdf02c080bf22230dbb337003b7aba2d
+  subpackages:
+  - difflib
+- name: github.com/stretchr/testify
+  version: 976c720a22c8eb4eb6a0b4348ad85ad12491a506
+  subpackages:
+  - assert
