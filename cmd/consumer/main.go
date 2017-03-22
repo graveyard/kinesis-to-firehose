@@ -80,7 +80,7 @@ func (rp *RecordProcessor) shouldUpdateSequence(sequenceNumber *big.Int, subSequ
 func (rp *RecordProcessor) ProcessRecords(records []kcl.Record, checkpointer kcl.Checkpointer) error {
 	for _, record := range records {
 		// Wait until rate limiter permits one record to be processed
-		err := rp.rateLimiter.Wait(context.Background())
+		rp.rateLimiter.Wait(context.Background())
 
 		// Base64 decode the record
 		data, err := base64.StdEncoding.DecodeString(record.Data)
