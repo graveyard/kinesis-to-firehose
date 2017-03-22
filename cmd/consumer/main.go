@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/base64"
 	"fmt"
 	"log"
@@ -9,6 +10,7 @@ import (
 	"time"
 
 	"github.com/Clever/amazon-kinesis-client-go/kcl"
+	"golang.org/x/time/rate"
 
 	"github.com/Clever/kinesis-to-firehose/firehose"
 )
@@ -22,6 +24,7 @@ type RecordProcessor struct {
 	largestSubSeq     int
 	lastCheckpoint    time.Time
 	firehoseWriter    *firehose.FirehoseWriter
+	rateLimiter       *rate.Limiter // Limits the number of records processed per second
 }
 
 func New() *RecordProcessor {
@@ -76,6 +79,9 @@ func (rp *RecordProcessor) shouldUpdateSequence(sequenceNumber *big.Int, subSequ
 
 func (rp *RecordProcessor) ProcessRecords(records []kcl.Record, checkpointer kcl.Checkpointer) error {
 	for _, record := range records {
+		// Wait until rate limiter permits one record to be processed
+		err := rp.rateLimiter.Wait(context.Background())
+
 		// Base64 decode the record
 		data, err := base64.StdEncoding.DecodeString(record.Data)
 		if err != nil {
@@ -167,7 +173,10 @@ func main() {
 		log.Fatalf("Failed to create FirehoseWriter: %s", err.Error())
 	}
 
-	kclProcess := kcl.New(os.Stdin, os.Stdout, os.Stderr, &RecordProcessor{firehoseWriter: writer})
+	kclProcess := kcl.New(os.Stdin, os.Stdout, os.Stderr, &RecordProcessor{
+		firehoseWriter: writer,
+		rateLimiter:    rate.NewLimiter(300, 500), // 300/s is normal limit, 500/s is burst limit
+	})
 	kclProcess.Run()
 }
 
