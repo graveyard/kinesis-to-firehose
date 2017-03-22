@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"sync/atomic"
+	"time"
 
 	"github.com/Clever/heka-clever-plugins/aws"
 	"github.com/Clever/heka-clever-plugins/batcher"
@@ -23,22 +24,24 @@ type FirehoseWriter struct {
 type FirehoseWriterConfig struct {
 	// The value of this field is used as the firehose stream name
 	StreamName string
-	// AWS region the stream lives in
-	Region string `toml:"region"`
-	// Interval at which accumulated messages should be bulk put to
-	// firehose, in milliseconds (default 1000, i.e. 1 second).
-	FlushInterval uint32 `toml:"flush_interval"`
+	// AWS region the firehose stream lives in
+	Region string
+	// Interval at which accumulated messages should be bulk put to firehose
+	FlushInterval time.Duration
 	// Number of messages that triggers a push to firehose
-	// (default to 1, maximum is 500)
-	FlushCount int `toml:"flush_count"`
+	// Max is 500, see: http://docs.aws.amazon.com/firehose/latest/dev/limits.html
+	FlushCount int
 	// Size of batch that triggers a push to firehose
-	// (default to 1024 * 1024 (1mb))
-	FlushSize int `toml:"flush_size"`
+	// Max is 4Mb (4*1024*1024), see: http://docs.aws.amazon.com/firehose/latest/dev/limits.html
+	FlushSize int
 }
 
 func NewFirehoseWriter(config FirehoseWriterConfig, mockEndpoint string) (*FirehoseWriter, error) {
 	if config.FlushCount > 500 || config.FlushCount < 1 {
 		return nil, fmt.Errorf("FlushCount must be between 1 and 500 messages")
+	}
+	if config.FlushSize < 1 || config.FlushSize > 4*1024*1024 {
+		return nil, fmt.Errorf("FlushSize must be between 1 and 4*1024*1024 (4 Mb)")
 	}
 	return &FirehoseWriter{
 		conf:         &config,
@@ -65,6 +68,9 @@ func (f *FirehoseWriter) ProcessMessage(msg string) error {
 	if !ok {
 		sync := f.createBatcherSync(f.conf.StreamName)
 		batch = batcher.New(sync)
+		batch.FlushCount(f.conf.FlushCount)
+		batch.FlushInterval(f.conf.FlushInterval)
+		batch.FlushSize(f.conf.FlushSize)
 		f.batchers[f.conf.StreamName] = batch
 	}
 	batch.Send(record)
