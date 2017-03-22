@@ -158,8 +158,8 @@ func main() {
 	config := firehose.FirehoseWriterConfig{
 		StreamName:    getEnv("FIREHOSE_STREAM_NAME"),
 		Region:        getEnv("FIREHOSE_AWS_REGION"),
-		FlushInterval: 10000,
-		FlushCount:    100,
+		FlushInterval: 30000,
+		FlushCount:    500,
 	}
 	writer, err := firehose.NewFirehoseWriter(config, "")
 	if err != nil {
