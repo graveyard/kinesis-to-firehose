@@ -7,6 +7,7 @@ import (
 	"log"
 	"math/big"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/Clever/amazon-kinesis-client-go/kcl"
@@ -173,9 +174,18 @@ func main() {
 		log.Fatalf("Failed to create FirehoseWriter: %s", err.Error())
 	}
 
+	// rateLimit is expressed in records-per-second
+	// because a consumer is created for each shard, we can think of this as records-per-second-per-shard
+	rl, err := strconv.ParseFloat(getEnv("RATE_LIMIT"), 64)
+	if err != nil {
+		log.Fatalf("Invalid RATE_LIMIT: %s", err.Error())
+	}
+	rateLimit := rate.Limit(rl)
+	burstLimit := int(rl * 1.2)
+
 	kclProcess := kcl.New(os.Stdin, os.Stdout, os.Stderr, &RecordProcessor{
 		firehoseWriter: writer,
-		rateLimiter:    rate.NewLimiter(500, 600), // 300/s is normal limit, 500/s is burst limit
+		rateLimiter:    rate.NewLimiter(rateLimit, burstLimit),
 	})
 	kclProcess.Run()
 }
