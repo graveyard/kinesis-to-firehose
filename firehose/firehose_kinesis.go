@@ -26,17 +26,15 @@ type FirehoseWriter struct {
 
 // FirehoseWriterConfig is the set of config options used in NewFirehoseWriter
 type FirehoseWriterConfig struct {
-	// The value of this field is used as the firehose stream name
+	// StreamName is the firehose stream name
 	StreamName string
-	// AWS region the firehose stream lives in
+	// Region is the AWS region the firehose stream lives in
 	Region string
-	// Interval at which accumulated messages should be bulk put to firehose
+	// FlushInterval is how often accumulated messages should be bulk put to firehose
 	FlushInterval time.Duration
-	// Number of messages that triggers a push to firehose
-	// Max is 500, see: http://docs.aws.amazon.com/firehose/latest/dev/limits.html
+	// FlushCount is the number of messages that triggers a push to firehose. Max batch size is 500, see: http://docs.aws.amazon.com/firehose/latest/dev/limits.html
 	FlushCount int
-	// Size of batch that triggers a push to firehose
-	// Max is 4Mb (4*1024*1024), see: http://docs.aws.amazon.com/firehose/latest/dev/limits.html
+	// FlushSize is the size of a batch in bytes that triggers a push to firehose. Max batch size is 4Mb (4*1024*1024), see: http://docs.aws.amazon.com/firehose/latest/dev/limits.html
 	FlushSize int
 }
 
