@@ -11,13 +11,14 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/firehose"
+	iface "github.com/aws/aws-sdk-go/service/firehose/firehoseiface"
 )
 
 // FirehoseWriter writes record batches to a firehose stream
 type FirehoseWriter struct {
 	streamName     string
 	messageBatcher batcher.Batcher
-	firehoseClient *firehose.Firehose
+	firehoseClient iface.FirehoseAPI
 
 	recvRecordCount   int64
 	sentRecordCount   int64
