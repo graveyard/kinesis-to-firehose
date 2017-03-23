@@ -175,7 +175,7 @@ func main() {
 
 	kclProcess := kcl.New(os.Stdin, os.Stdout, os.Stderr, &RecordProcessor{
 		firehoseWriter: writer,
-		rateLimiter:    rate.NewLimiter(300, 500), // 300/s is normal limit, 500/s is burst limit
+		rateLimiter:    rate.NewLimiter(500, 600), // 300/s is normal limit, 500/s is burst limit
 	})
 	kclProcess.Run()
 }
