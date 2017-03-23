@@ -3,24 +3,28 @@ package firehose
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 	"sync/atomic"
 	"time"
 
-	"github.com/Clever/heka-clever-plugins/aws"
 	"github.com/Clever/heka-clever-plugins/batcher"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
+	awsFirehose "github.com/aws/aws-sdk-go/service/firehose"
 )
 
+// FirehoseWriter writes record batches to a firehose stream
 type FirehoseWriter struct {
-	conf     *FirehoseWriterConfig
-	batchers map[string]batcher.Batcher
+	streamName     string
+	messageBatcher batcher.Batcher
+	firehoseClient *awsFirehose.Firehose
 
-	mockEndpoint string
-
-	recvRecordCount    int64
-	sentRecordCount    int64
-	droppedRecordCount int64
+	recvRecordCount   int64
+	sentRecordCount   int64
+	failedRecordCount int64
 }
 
+// FirehoseWriterConfig is the set of config options used in NewFirehoseWriter
 type FirehoseWriterConfig struct {
 	// The value of this field is used as the firehose stream name
 	StreamName string
@@ -36,20 +40,31 @@ type FirehoseWriterConfig struct {
 	FlushSize int
 }
 
-func NewFirehoseWriter(config FirehoseWriterConfig, mockEndpoint string) (*FirehoseWriter, error) {
+// NewFirehoseWriter constructs a FirehoseWriter
+func NewFirehoseWriter(config FirehoseWriterConfig) (*FirehoseWriter, error) {
 	if config.FlushCount > 500 || config.FlushCount < 1 {
 		return nil, fmt.Errorf("FlushCount must be between 1 and 500 messages")
 	}
 	if config.FlushSize < 1 || config.FlushSize > 4*1024*1024 {
 		return nil, fmt.Errorf("FlushSize must be between 1 and 4*1024*1024 (4 Mb)")
 	}
-	return &FirehoseWriter{
-		conf:         &config,
-		mockEndpoint: mockEndpoint,
-		batchers:     map[string]batcher.Batcher{},
-	}, nil
+
+	sess := session.Must(session.NewSession(aws.NewConfig().WithRegion(config.Region).WithMaxRetries(4)))
+
+	f := &FirehoseWriter{
+		streamName:     config.StreamName,
+		firehoseClient: awsFirehose.New(sess),
+	}
+
+	f.messageBatcher = batcher.New(f)
+	f.messageBatcher.FlushCount(config.FlushCount)
+	f.messageBatcher.FlushInterval(config.FlushInterval)
+	f.messageBatcher.FlushSize(config.FlushSize)
+
+	return f, nil
 }
 
+// ProcessMessage reads an input string and adds it to the batcher, which will ultimately send it
 func (f *FirehoseWriter) ProcessMessage(msg string) error {
 	atomic.AddInt64(&f.recvRecordCount, 1)
 
@@ -60,69 +75,47 @@ func (f *FirehoseWriter) ProcessMessage(msg string) error {
 
 	record, err := json.Marshal(fields)
 	if err != nil {
-		atomic.AddInt64(&f.droppedRecordCount, 1)
+		atomic.AddInt64(&f.failedRecordCount, 1)
 		return err
 	}
 
-	batch, ok := f.batchers[f.conf.StreamName]
-	if !ok {
-		sync := f.createBatcherSync(f.conf.StreamName)
-		batch = batcher.New(sync)
-		batch.FlushCount(f.conf.FlushCount)
-		batch.FlushInterval(f.conf.FlushInterval)
-		batch.FlushSize(f.conf.FlushSize)
-		f.batchers[f.conf.StreamName] = batch
-	}
-	batch.Send(record)
-
-	return nil
+	return f.messageBatcher.Send(record)
 }
 
-func (f *FirehoseWriter) createBatcherSync(seriesName string) batcher.Sync {
-	var client aws.RecordPutter
-
-	if f.mockEndpoint == "" {
-		client = aws.NewFirehose(f.conf.Region, seriesName)
-	} else {
-		client = aws.NewMockRecordPutter(seriesName, f.mockEndpoint)
+// Flush writes a batch of records to AWS Firehose
+func (f *FirehoseWriter) Flush(batch [][]byte) {
+	// Construct the array of firehose.Records
+	awsRecords := make([]*awsFirehose.Record, len(batch))
+	for idx, record := range batch {
+		awsRecords[idx] = &awsFirehose.Record{
+			Data: record,
+		}
 	}
 
-	return &syncPutterAdapter{client: client, output: f}
-}
-
-type syncPutterAdapter struct {
-	client aws.RecordPutter
-	output *FirehoseWriter
-}
-
-func (s *syncPutterAdapter) Flush(batch [][]byte) {
-	count := int64(len(batch))
-
-	err := s.client.PutRecordBatch(batch)
+	// Write to Firehose
+	output, err := f.firehoseClient.PutRecordBatch(&awsFirehose.PutRecordBatchInput{
+		DeliveryStreamName: &f.streamName,
+		Records:            awsRecords,
+	})
 	if err != nil {
-		atomic.AddInt64(&s.output.droppedRecordCount, count)
-	} else {
-		atomic.AddInt64(&s.output.sentRecordCount, count)
+		fmt.Fprintf(os.Stderr, "Error writing to Firehose: %s\n", err.Error())
 	}
+
+	// Track success/failure counts
+	sentCount := int64(len(batch))
+	if output.FailedPutCount != nil {
+		atomic.AddInt64(&f.failedRecordCount, *output.FailedPutCount)
+		sentCount -= *output.FailedPutCount
+	}
+	atomic.AddInt64(&f.sentRecordCount, sentCount)
 }
 
-type FirehoseWriterStatus struct {
-	RecvRecordCount    int64
-	SentRecordCount    int64
-	DroppedRecordCount int64
+// Status returns the number of received, sent, and failed records
+func (f *FirehoseWriter) Status() string {
+	return fmt.Sprintf("Received:%d Sent:%d Failed:%d", f.recvRecordCount, f.sentRecordCount, f.failedRecordCount)
 }
 
-func (f *FirehoseWriter) Status() FirehoseWriterStatus {
-	return FirehoseWriterStatus{
-		RecvRecordCount:    f.recvRecordCount,
-		SentRecordCount:    f.sentRecordCount,
-		DroppedRecordCount: f.droppedRecordCount,
-	}
-}
-
-// FlushAll flushes all batches. It's useful when shutting down.
-func (f *FirehoseWriter) FlushAll() {
-	for _, batch := range f.batchers {
-		batch.Flush()
-	}
+// Shutdown flushes all remaining messages in the batcher.
+func (f *FirehoseWriter) Shutdown() {
+	f.messageBatcher.Flush()
 }

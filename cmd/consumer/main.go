@@ -118,7 +118,7 @@ func (rp *RecordProcessor) ProcessRecords(records []kcl.Record, checkpointer kcl
 		rp.lastCheckpoint = time.Now()
 
 		// Write status to file
-		err := appendToFile(logFile, fmt.Sprintf("%s -- %+v\n", rp.shardID, rp.firehoseWriter.Status()))
+		err := appendToFile(logFile, fmt.Sprintf("%s -- %s\n", rp.shardID, rp.firehoseWriter.Status()))
 		if err != nil {
 			return err
 		}
@@ -143,7 +143,7 @@ func appendToFile(filename, text string) error {
 func (rp *RecordProcessor) Shutdown(checkpointer kcl.Checkpointer, reason string) error {
 	if reason == "TERMINATE" {
 		fmt.Fprintf(os.Stderr, "Was told to terminate, will attempt to checkpoint.\n")
-		rp.firehoseWriter.FlushAll()
+		rp.firehoseWriter.Shutdown()
 		rp.checkpoint(checkpointer, "", 0)
 	} else {
 		fmt.Fprintf(os.Stderr, "Shutting down due to failover. Reason: %s. Will not checkpoint.\n", reason)
@@ -169,7 +169,7 @@ func main() {
 		FlushCount:    500,
 		FlushSize:     4 * 1024 * 1024, // 4Mb
 	}
-	writer, err := firehose.NewFirehoseWriter(config, "")
+	writer, err := firehose.NewFirehoseWriter(config)
 	if err != nil {
 		log.Fatalf("Failed to create FirehoseWriter: %s", err.Error())
 	}
