@@ -143,7 +143,7 @@ func appendToFile(filename, text string) error {
 func (rp *RecordProcessor) Shutdown(checkpointer kcl.Checkpointer, reason string) error {
 	if reason == "TERMINATE" {
 		fmt.Fprintf(os.Stderr, "Was told to terminate, will attempt to checkpoint.\n")
-		rp.firehoseWriter.Shutdown()
+		rp.firehoseWriter.FlushAll()
 		rp.checkpoint(checkpointer, "", 0)
 	} else {
 		fmt.Fprintf(os.Stderr, "Shutting down due to failover. Reason: %s. Will not checkpoint.\n", reason)

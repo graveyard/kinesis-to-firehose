@@ -113,7 +113,7 @@ func (f *FirehoseWriter) Status() string {
 	return fmt.Sprintf("Received:%d Sent:%d Failed:%d", f.recvRecordCount, f.sentRecordCount, f.failedRecordCount)
 }
 
-// Shutdown flushes all remaining messages in the batcher.
-func (f *FirehoseWriter) Shutdown() {
+// FlushAll flushes all remaining messages in the batcher.
+func (f *FirehoseWriter) FlushAll() {
 	f.messageBatcher.Flush()
 }
