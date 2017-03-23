@@ -4,7 +4,13 @@ Consumes records from Kinesis and writes to Firehose.
 
 ## Running the Consumer
 
-To build and run the consumer, set required env vars for your Kinesis input stream, Firehose output stream, and logfile. Then run `make run`.
+To build and run the consumer, set required env vars. Then run, `make run`.
+
+Env vars include:
+- Kinesis input stream
+- Firehose output stream
+- logfile
+- rate limit (allows throttling the # of records-per-second to read from each Kinesis shard)
 
 ``` bash
 KINESIS_AWS_REGION=us-west-1 \
@@ -12,6 +18,7 @@ KINESIS_STREAM_NAME=kinesis-test \
 FIREHOSE_AWS_REGION=us-west-2 \
 FIREHOSE_STREAM_NAME=firehose-test \
 LOG_FILE=/tmp/kcl_stderr \
+RATE_LIMIT=100 \
 make run
 ```
 

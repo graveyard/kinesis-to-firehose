@@ -1,14 +1,17 @@
 package main
 
 import (
+	"context"
 	"encoding/base64"
 	"fmt"
 	"log"
 	"math/big"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/Clever/amazon-kinesis-client-go/kcl"
+	"golang.org/x/time/rate"
 
 	"github.com/Clever/kinesis-to-firehose/firehose"
 )
@@ -22,6 +25,7 @@ type RecordProcessor struct {
 	largestSubSeq     int
 	lastCheckpoint    time.Time
 	firehoseWriter    *firehose.FirehoseWriter
+	rateLimiter       *rate.Limiter // Limits the number of records processed per second
 }
 
 func New() *RecordProcessor {
@@ -76,6 +80,9 @@ func (rp *RecordProcessor) shouldUpdateSequence(sequenceNumber *big.Int, subSequ
 
 func (rp *RecordProcessor) ProcessRecords(records []kcl.Record, checkpointer kcl.Checkpointer) error {
 	for _, record := range records {
+		// Wait until rate limiter permits one record to be processed
+		rp.rateLimiter.Wait(context.Background())
+
 		// Base64 decode the record
 		data, err := base64.StdEncoding.DecodeString(record.Data)
 		if err != nil {
@@ -158,15 +165,28 @@ func main() {
 	config := firehose.FirehoseWriterConfig{
 		StreamName:    getEnv("FIREHOSE_STREAM_NAME"),
 		Region:        getEnv("FIREHOSE_AWS_REGION"),
-		FlushInterval: 10000,
-		FlushCount:    100,
+		FlushInterval: 10 * time.Second,
+		FlushCount:    500,
+		FlushSize:     4 * 1024 * 1024, // 4Mb
 	}
 	writer, err := firehose.NewFirehoseWriter(config, "")
 	if err != nil {
 		log.Fatalf("Failed to create FirehoseWriter: %s", err.Error())
 	}
 
-	kclProcess := kcl.New(os.Stdin, os.Stdout, os.Stderr, &RecordProcessor{firehoseWriter: writer})
+	// rateLimit is expressed in records-per-second
+	// because a consumer is created for each shard, we can think of this as records-per-second-per-shard
+	rl, err := strconv.ParseFloat(getEnv("RATE_LIMIT"), 64)
+	if err != nil {
+		log.Fatalf("Invalid RATE_LIMIT: %s", err.Error())
+	}
+	rateLimit := rate.Limit(rl)
+	burstLimit := int(rl * 1.2)
+
+	kclProcess := kcl.New(os.Stdin, os.Stdout, os.Stderr, &RecordProcessor{
+		firehoseWriter: writer,
+		rateLimiter:    rate.NewLimiter(rateLimit, burstLimit),
+	})
 	kclProcess.Run()
 }
 
