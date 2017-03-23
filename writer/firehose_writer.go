@@ -1,4 +1,4 @@
-package firehose
+package writer
 
 import (
 	"encoding/json"
@@ -10,14 +10,14 @@ import (
 	"github.com/Clever/heka-clever-plugins/batcher"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
-	awsFirehose "github.com/aws/aws-sdk-go/service/firehose"
+	"github.com/aws/aws-sdk-go/service/firehose"
 )
 
 // FirehoseWriter writes record batches to a firehose stream
 type FirehoseWriter struct {
 	streamName     string
 	messageBatcher batcher.Batcher
-	firehoseClient *awsFirehose.Firehose
+	firehoseClient *firehose.Firehose
 
 	recvRecordCount   int64
 	sentRecordCount   int64
@@ -51,7 +51,7 @@ func NewFirehoseWriter(config FirehoseWriterConfig) (*FirehoseWriter, error) {
 
 	f := &FirehoseWriter{
 		streamName:     config.StreamName,
-		firehoseClient: awsFirehose.New(sess),
+		firehoseClient: firehose.New(sess),
 	}
 
 	f.messageBatcher = batcher.New(f)
@@ -83,15 +83,15 @@ func (f *FirehoseWriter) ProcessMessage(msg string) error {
 // Flush writes a batch of records to AWS Firehose
 func (f *FirehoseWriter) Flush(batch [][]byte) {
 	// Construct the array of firehose.Records
-	awsRecords := make([]*awsFirehose.Record, len(batch))
+	awsRecords := make([]*firehose.Record, len(batch))
 	for idx, record := range batch {
-		awsRecords[idx] = &awsFirehose.Record{
+		awsRecords[idx] = &firehose.Record{
 			Data: record,
 		}
 	}
 
 	// Write to Firehose
-	output, err := f.firehoseClient.PutRecordBatch(&awsFirehose.PutRecordBatchInput{
+	output, err := f.firehoseClient.PutRecordBatch(&firehose.PutRecordBatchInput{
 		DeliveryStreamName: &f.streamName,
 		Records:            awsRecords,
 	})

@@ -13,7 +13,7 @@ import (
 	"github.com/Clever/amazon-kinesis-client-go/kcl"
 	"golang.org/x/time/rate"
 
-	"github.com/Clever/kinesis-to-firehose/firehose"
+	"github.com/Clever/kinesis-to-firehose/writer"
 )
 
 type RecordProcessor struct {
@@ -24,7 +24,7 @@ type RecordProcessor struct {
 	largestSeq        *big.Int
 	largestSubSeq     int
 	lastCheckpoint    time.Time
-	firehoseWriter    *firehose.FirehoseWriter
+	firehoseWriter    *writer.FirehoseWriter
 	rateLimiter       *rate.Limiter // Limits the number of records processed per second
 }
 
@@ -162,14 +162,14 @@ func main() {
 	}
 	defer f.Close()
 
-	config := firehose.FirehoseWriterConfig{
+	config := writer.FirehoseWriterConfig{
 		StreamName:    getEnv("FIREHOSE_STREAM_NAME"),
 		Region:        getEnv("FIREHOSE_AWS_REGION"),
 		FlushInterval: 10 * time.Second,
 		FlushCount:    500,
 		FlushSize:     4 * 1024 * 1024, // 4Mb
 	}
-	writer, err := firehose.NewFirehoseWriter(config)
+	writer, err := writer.NewFirehoseWriter(config)
 	if err != nil {
 		log.Fatalf("Failed to create FirehoseWriter: %s", err.Error())
 	}
