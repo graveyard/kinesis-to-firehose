@@ -11,6 +11,9 @@ import (
 	"time"
 
 	"github.com/Clever/amazon-kinesis-client-go/kcl"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/firehose"
 	"golang.org/x/time/rate"
 
 	"github.com/Clever/kinesis-to-firehose/writer"
@@ -90,11 +93,6 @@ func (rp *RecordProcessor) ProcessRecords(records []kcl.Record, checkpointer kcl
 		}
 		msg := string(data)
 
-		// TODO: Add additional "decoding"
-		// - pull JSON data out of string
-		// - parse RSyslog format
-		// - etc...
-
 		// Write the message to firehose
 		err = rp.firehoseWriter.ProcessMessage(msg)
 		if err != nil {
@@ -162,12 +160,13 @@ func main() {
 	}
 	defer f.Close()
 
+	sess := session.Must(session.NewSession(aws.NewConfig().WithRegion(getEnv("FIREHOSE_AWS_REGION")).WithMaxRetries(4)))
 	config := writer.FirehoseWriterConfig{
-		StreamName:    getEnv("FIREHOSE_STREAM_NAME"),
-		Region:        getEnv("FIREHOSE_AWS_REGION"),
-		FlushInterval: 10 * time.Second,
-		FlushCount:    500,
-		FlushSize:     4 * 1024 * 1024, // 4Mb
+		FirehoseClient: firehose.New(sess),
+		StreamName:     getEnv("FIREHOSE_STREAM_NAME"),
+		FlushInterval:  10 * time.Second,
+		FlushCount:     500,
+		FlushSize:      4 * 1024 * 1024, // 4Mb
 	}
 	writer, err := writer.NewFirehoseWriter(config)
 	if err != nil {

@@ -8,8 +8,6 @@ import (
 	"time"
 
 	"github.com/Clever/heka-clever-plugins/batcher"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/firehose"
 	iface "github.com/aws/aws-sdk-go/service/firehose/firehoseiface"
 )
@@ -27,10 +25,10 @@ type FirehoseWriter struct {
 
 // FirehoseWriterConfig is the set of config options used in NewFirehoseWriter
 type FirehoseWriterConfig struct {
+	// FirehoseClient allows writing to the Firehose API
+	FirehoseClient iface.FirehoseAPI
 	// StreamName is the firehose stream name
 	StreamName string
-	// Region is the AWS region the firehose stream lives in
-	Region string
 	// FlushInterval is how often accumulated messages should be bulk put to firehose
 	FlushInterval time.Duration
 	// FlushCount is the number of messages that triggers a push to firehose. Max batch size is 500, see: http://docs.aws.amazon.com/firehose/latest/dev/limits.html
@@ -48,11 +46,9 @@ func NewFirehoseWriter(config FirehoseWriterConfig) (*FirehoseWriter, error) {
 		return nil, fmt.Errorf("FlushSize must be between 1 and 4*1024*1024 (4 Mb)")
 	}
 
-	sess := session.Must(session.NewSession(aws.NewConfig().WithRegion(config.Region).WithMaxRetries(4)))
-
 	f := &FirehoseWriter{
 		streamName:     config.StreamName,
-		firehoseClient: firehose.New(sess),
+		firehoseClient: config.FirehoseClient,
 	}
 
 	f.messageBatcher = batcher.New(f)
