@@ -66,7 +66,10 @@ run_kinesis_consumer: consumer_properties
 	command -v java >/dev/null 2>&1 || { echo >&2 "Java not installed. Install java!"; exit 1; }
 	java -cp $(JAVA_CLASS_PATH) com.amazonaws.services.kinesis.multilang.MultiLangDaemon consumer.properties
 
-run: build download_jars run_kinesis_consumer
+run:
+	GOOS=linux GOARCH=amd64 make build
+	docker build -t kinesis-to-firehose .
+	docker run --env-file=<(echo -e $(_ARKLOC_ENV_FILE)) kinesis-to-firehose
 
 test:
 	echo "no tests :("

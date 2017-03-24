@@ -11,9 +11,12 @@ import (
 	"time"
 
 	"github.com/Clever/amazon-kinesis-client-go/kcl"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/firehose"
 	"golang.org/x/time/rate"
 
-	"github.com/Clever/kinesis-to-firehose/firehose"
+	"github.com/Clever/kinesis-to-firehose/writer"
 )
 
 type RecordProcessor struct {
@@ -24,7 +27,7 @@ type RecordProcessor struct {
 	largestSeq        *big.Int
 	largestSubSeq     int
 	lastCheckpoint    time.Time
-	firehoseWriter    *firehose.FirehoseWriter
+	firehoseWriter    *writer.FirehoseWriter
 	rateLimiter       *rate.Limiter // Limits the number of records processed per second
 }
 
@@ -90,11 +93,6 @@ func (rp *RecordProcessor) ProcessRecords(records []kcl.Record, checkpointer kcl
 		}
 		msg := string(data)
 
-		// TODO: Add additional "decoding"
-		// - pull JSON data out of string
-		// - parse RSyslog format
-		// - etc...
-
 		// Write the message to firehose
 		err = rp.firehoseWriter.ProcessMessage(msg)
 		if err != nil {
@@ -118,7 +116,7 @@ func (rp *RecordProcessor) ProcessRecords(records []kcl.Record, checkpointer kcl
 		rp.lastCheckpoint = time.Now()
 
 		// Write status to file
-		err := appendToFile(logFile, fmt.Sprintf("%s -- %+v\n", rp.shardID, rp.firehoseWriter.Status()))
+		err := appendToFile(logFile, fmt.Sprintf("%s -- %s\n", rp.shardID, rp.firehoseWriter.Status()))
 		if err != nil {
 			return err
 		}
@@ -162,14 +160,15 @@ func main() {
 	}
 	defer f.Close()
 
-	config := firehose.FirehoseWriterConfig{
-		StreamName:    getEnv("FIREHOSE_STREAM_NAME"),
-		Region:        getEnv("FIREHOSE_AWS_REGION"),
-		FlushInterval: 10 * time.Second,
-		FlushCount:    500,
-		FlushSize:     4 * 1024 * 1024, // 4Mb
+	sess := session.Must(session.NewSession(aws.NewConfig().WithRegion(getEnv("FIREHOSE_AWS_REGION")).WithMaxRetries(4)))
+	config := writer.FirehoseWriterConfig{
+		FirehoseClient: firehose.New(sess),
+		StreamName:     getEnv("FIREHOSE_STREAM_NAME"),
+		FlushInterval:  10 * time.Second,
+		FlushCount:     500,
+		FlushSize:      4 * 1024 * 1024, // 4Mb
 	}
-	writer, err := firehose.NewFirehoseWriter(config, "")
+	writer, err := writer.NewFirehoseWriter(config)
 	if err != nil {
 		log.Fatalf("Failed to create FirehoseWriter: %s", err.Error())
 	}
