@@ -1,25 +1,23 @@
-package main
+package record_processor
 
 import (
-	"context"
 	"encoding/base64"
 	"fmt"
-	"log"
 	"math/big"
 	"os"
-	"strconv"
 	"time"
 
 	"github.com/Clever/amazon-kinesis-client-go/kcl"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/firehose"
-	"golang.org/x/time/rate"
-
 	"github.com/Clever/kinesis-to-firehose/writer"
+	"golang.org/x/net/context"
+	"golang.org/x/time/rate"
 )
 
 type RecordProcessor struct {
+	LogFile        string
+	RateLimiter    *rate.Limiter // Limits the number of records processed per second
+	FirehoseWriter *writer.FirehoseWriter
+
 	shardID           string
 	sleepDuration     time.Duration
 	checkpointRetries int
@@ -27,8 +25,6 @@ type RecordProcessor struct {
 	largestSeq        *big.Int
 	largestSubSeq     int
 	lastCheckpoint    time.Time
-	firehoseWriter    *writer.FirehoseWriter
-	rateLimiter       *rate.Limiter // Limits the number of records processed per second
 }
 
 func New() *RecordProcessor {
@@ -84,7 +80,7 @@ func (rp *RecordProcessor) shouldUpdateSequence(sequenceNumber *big.Int, subSequ
 func (rp *RecordProcessor) ProcessRecords(records []kcl.Record, checkpointer kcl.Checkpointer) error {
 	for _, record := range records {
 		// Wait until rate limiter permits one record to be processed
-		rp.rateLimiter.Wait(context.Background())
+		rp.RateLimiter.Wait(context.Background())
 
 		// Base64 decode the record
 		data, err := base64.StdEncoding.DecodeString(record.Data)
@@ -94,13 +90,12 @@ func (rp *RecordProcessor) ProcessRecords(records []kcl.Record, checkpointer kcl
 		msg := string(data)
 
 		// Write the message to firehose
-		err = rp.firehoseWriter.ProcessMessage(msg)
+		err = rp.FirehoseWriter.ProcessMessage(msg)
 		if err != nil {
 			return err
 		}
 
 		// Handle checkpointing
-		// TODO: How to handle the difference between ProcessMessage (sent to FirehoseOutput) vs successfully sent?
 		seqNumber := new(big.Int)
 		if _, ok := seqNumber.SetString(record.SequenceNumber, 10); !ok {
 			fmt.Fprintf(os.Stderr, "could not parse sequence number '%s'\n", record.SequenceNumber)
@@ -116,10 +111,21 @@ func (rp *RecordProcessor) ProcessRecords(records []kcl.Record, checkpointer kcl
 		rp.lastCheckpoint = time.Now()
 
 		// Write status to file
-		err := appendToFile(logFile, fmt.Sprintf("%s -- %s\n", rp.shardID, rp.firehoseWriter.Status()))
+		err := appendToFile(rp.LogFile, fmt.Sprintf("%s -- %s\n", rp.shardID, rp.FirehoseWriter.Status()))
 		if err != nil {
 			return err
 		}
+	}
+	return nil
+}
+
+func (rp *RecordProcessor) Shutdown(checkpointer kcl.Checkpointer, reason string) error {
+	if reason == "TERMINATE" {
+		fmt.Fprintf(os.Stderr, "Was told to terminate, will attempt to checkpoint.\n")
+		rp.FirehoseWriter.FlushAll()
+		rp.checkpoint(checkpointer, "", 0)
+	} else {
+		fmt.Fprintf(os.Stderr, "Shutting down due to failover. Reason: %s. Will not checkpoint.\n", reason)
 	}
 	return nil
 }
@@ -136,64 +142,4 @@ func appendToFile(filename, text string) error {
 	}
 
 	return nil
-}
-
-func (rp *RecordProcessor) Shutdown(checkpointer kcl.Checkpointer, reason string) error {
-	if reason == "TERMINATE" {
-		fmt.Fprintf(os.Stderr, "Was told to terminate, will attempt to checkpoint.\n")
-		rp.firehoseWriter.FlushAll()
-		rp.checkpoint(checkpointer, "", 0)
-	} else {
-		fmt.Fprintf(os.Stderr, "Shutting down due to failover. Reason: %s. Will not checkpoint.\n", reason)
-	}
-	return nil
-}
-
-var logFile = "/tmp/kcl_stderr"
-
-func main() {
-	logFile := getEnv("LOG_FILE")
-
-	f, err := os.Create(logFile)
-	if err != nil {
-		panic(err)
-	}
-	defer f.Close()
-
-	sess := session.Must(session.NewSession(aws.NewConfig().WithRegion(getEnv("FIREHOSE_AWS_REGION")).WithMaxRetries(4)))
-	config := writer.FirehoseWriterConfig{
-		FirehoseClient: firehose.New(sess),
-		StreamName:     getEnv("FIREHOSE_STREAM_NAME"),
-		FlushInterval:  10 * time.Second,
-		FlushCount:     500,
-		FlushSize:      4 * 1024 * 1024, // 4Mb
-	}
-	writer, err := writer.NewFirehoseWriter(config)
-	if err != nil {
-		log.Fatalf("Failed to create FirehoseWriter: %s", err.Error())
-	}
-
-	// rateLimit is expressed in records-per-second
-	// because a consumer is created for each shard, we can think of this as records-per-second-per-shard
-	rl, err := strconv.ParseFloat(getEnv("RATE_LIMIT"), 64)
-	if err != nil {
-		log.Fatalf("Invalid RATE_LIMIT: %s", err.Error())
-	}
-	rateLimit := rate.Limit(rl)
-	burstLimit := int(rl * 1.2)
-
-	kclProcess := kcl.New(os.Stdin, os.Stdout, os.Stderr, &RecordProcessor{
-		firehoseWriter: writer,
-		rateLimiter:    rate.NewLimiter(rateLimit, burstLimit),
-	})
-	kclProcess.Run()
-}
-
-// getEnv looks up an environment variable given and exits if it does not exist.
-func getEnv(envVar string) string {
-	val := os.Getenv(envVar)
-	if val == "" {
-		log.Fatalf("Must specify env variable %s", envVar)
-	}
-	return val
 }
