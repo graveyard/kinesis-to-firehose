@@ -31,11 +31,13 @@ type RecordProcessor struct {
 	rateLimiter       *rate.Limiter // Limits the number of records processed per second
 }
 
-func New() *RecordProcessor {
+func NewRecordProcessor(writer *writer.FirehoseWriter, limiter *rate.Limiter) *RecordProcessor {
 	return &RecordProcessor{
 		sleepDuration:     5 * time.Second,
 		checkpointRetries: 5,
 		checkpointFreq:    60 * time.Second,
+		firehoseWriter:    writer,
+		rateLimiter:       limiter,
 	}
 }
 
@@ -182,10 +184,8 @@ func main() {
 	rateLimit := rate.Limit(rl)
 	burstLimit := int(rl * 1.2)
 
-	kclProcess := kcl.New(os.Stdin, os.Stdout, os.Stderr, &RecordProcessor{
-		firehoseWriter: writer,
-		rateLimiter:    rate.NewLimiter(rateLimit, burstLimit),
-	})
+	rp := NewRecordProcessor(writer, rate.NewLimiter(rateLimit, burstLimit))
+	kclProcess := kcl.New(os.Stdin, os.Stdout, os.Stderr, rp)
 	kclProcess.Run()
 }
 
