@@ -48,7 +48,7 @@ func (rp *RecordProcessor) Initialize(shardID string) error {
 }
 
 func (rp *RecordProcessor) checkpoint(checkpointer kcl.Checkpointer, sequenceNumber string, subSequenceNumber int) {
-	for n := 0; n < rp.checkpointRetries; n++ {
+	for n := -1; n < rp.checkpointRetries; n++ {
 		err := checkpointer.Checkpoint(sequenceNumber, subSequenceNumber)
 		if err == nil {
 			return
@@ -68,7 +68,7 @@ func (rp *RecordProcessor) checkpoint(checkpointer kcl.Checkpointer, sequenceNum
 			}
 		}
 
-		if n == rp.checkpointRetries-1 {
+		if n == rp.checkpointRetries {
 			fmt.Fprintf(os.Stderr, "Failed to checkpoint after %d attempts, giving up.\n", rp.checkpointRetries)
 			return
 		}
