@@ -26,4 +26,7 @@ This will download the jar files necessary to run the KCL, and then launch the K
 
 ### Running at Clever
 
-You can also use `ark` to run locally, via `ark start --local`
+You can also use `ark` to run locally, via `ark start --local`.
+
+Note: In addition to output from the process, you may want to run `tail -f /tmp/kcl_stderr` to view more logs written to file.
+These logs aren't written to stdout/stderr, since KCL uses those for communication.
