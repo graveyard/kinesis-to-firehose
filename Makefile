@@ -69,7 +69,7 @@ run_kinesis_consumer: consumer_properties
 run:
 	GOOS=linux GOARCH=amd64 make build
 	docker build -t kinesis-to-firehose .
-	docker run --env-file=<(echo -e $(_ARKLOC_ENV_FILE)) kinesis-to-firehose
+	docker run -v /tmp:/tmp --env-file=<(echo -e $(_ARKLOC_ENV_FILE)) kinesis-to-firehose
 
 test:
 	echo "no tests :("

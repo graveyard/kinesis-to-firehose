@@ -31,11 +31,13 @@ type RecordProcessor struct {
 	rateLimiter       *rate.Limiter // Limits the number of records processed per second
 }
 
-func New() *RecordProcessor {
+func NewRecordProcessor(writer *writer.FirehoseWriter, limiter *rate.Limiter) *RecordProcessor {
 	return &RecordProcessor{
 		sleepDuration:     5 * time.Second,
 		checkpointRetries: 5,
 		checkpointFreq:    60 * time.Second,
+		firehoseWriter:    writer,
+		rateLimiter:       limiter,
 	}
 }
 
@@ -46,7 +48,7 @@ func (rp *RecordProcessor) Initialize(shardID string) error {
 }
 
 func (rp *RecordProcessor) checkpoint(checkpointer kcl.Checkpointer, sequenceNumber string, subSequenceNumber int) {
-	for n := 0; n < rp.checkpointRetries; n++ {
+	for n := -1; n < rp.checkpointRetries; n++ {
 		err := checkpointer.Checkpoint(sequenceNumber, subSequenceNumber)
 		if err == nil {
 			return
@@ -66,7 +68,7 @@ func (rp *RecordProcessor) checkpoint(checkpointer kcl.Checkpointer, sequenceNum
 			}
 		}
 
-		if n == rp.checkpointRetries-1 {
+		if n == rp.checkpointRetries {
 			fmt.Fprintf(os.Stderr, "Failed to checkpoint after %d attempts, giving up.\n", rp.checkpointRetries)
 			return
 		}
@@ -182,10 +184,8 @@ func main() {
 	rateLimit := rate.Limit(rl)
 	burstLimit := int(rl * 1.2)
 
-	kclProcess := kcl.New(os.Stdin, os.Stdout, os.Stderr, &RecordProcessor{
-		firehoseWriter: writer,
-		rateLimiter:    rate.NewLimiter(rateLimit, burstLimit),
-	})
+	rp := NewRecordProcessor(writer, rate.NewLimiter(rateLimit, burstLimit))
+	kclProcess := kcl.New(os.Stdin, os.Stdout, os.Stderr, rp)
 	kclProcess.Run()
 }
 
