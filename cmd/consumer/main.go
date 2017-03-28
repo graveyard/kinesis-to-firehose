@@ -102,7 +102,6 @@ func (rp *RecordProcessor) ProcessRecords(records []kcl.Record, checkpointer kcl
 		}
 
 		// Handle checkpointing
-		// TODO: How to handle the difference between ProcessMessage (sent to FirehoseOutput) vs successfully sent?
 		seqNumber := new(big.Int)
 		if _, ok := seqNumber.SetString(record.SequenceNumber, 10); !ok {
 			fmt.Fprintf(os.Stderr, "could not parse sequence number '%s'\n", record.SequenceNumber)
@@ -141,13 +140,10 @@ func appendToFile(filename, text string) error {
 }
 
 func (rp *RecordProcessor) Shutdown(checkpointer kcl.Checkpointer, reason string) error {
-	if reason == "TERMINATE" {
-		fmt.Fprintf(os.Stderr, "Was told to terminate, will attempt to checkpoint.\n")
-		rp.firehoseWriter.FlushAll()
-		rp.checkpoint(checkpointer, "", 0)
-	} else {
-		fmt.Fprintf(os.Stderr, "Shutting down due to failover. Reason: %s. Will not checkpoint.\n", reason)
-	}
+	fmt.Fprintf(os.Stderr, "Shutting down. Reason: %s. Attempting to flush messages and checkpoint.\n", reason)
+	rp.firehoseWriter.FlushAll()
+	time.Sleep(5 * time.Second) // Wait for messages to be flushed
+	rp.checkpoint(checkpointer, rp.largestSeq.String(), rp.largestSubSeq)
 	return nil
 }
 
