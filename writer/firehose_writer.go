@@ -22,12 +22,12 @@ type FirehoseWriter struct {
 	logFile string
 
 	// KCL checkpointing
-	sleepDuration     time.Duration
-	checkpointRetries int
-	checkpointFreq    time.Duration
-	largestSeq        *big.Int
-	largestSubSeq     int
-	lastCheckpoint    time.Time
+	sleepDuration        time.Duration
+	checkpointRetries    int
+	checkpointFreq       time.Duration
+	lastCheckpoint       time.Time
+	largestSeqFlushed    *big.Int
+	largestSubSeqFlushed int
 
 	// Limits the number of records processed per second
 	rateLimiter *rate.Limiter
@@ -91,7 +91,6 @@ func (f *FirehoseWriter) Initialize(shardID string) error {
 	return nil
 }
 
-// TODO: refactor KCL checkpointer to include retries / sleep duration
 func (f *FirehoseWriter) checkpoint(checkpointer kcl.Checkpointer, sequenceNumber string, subSequenceNumber int) {
 	for n := -1; n < f.checkpointRetries; n++ {
 		err := checkpointer.Checkpoint(sequenceNumber, subSequenceNumber)
@@ -122,12 +121,6 @@ func (f *FirehoseWriter) checkpoint(checkpointer kcl.Checkpointer, sequenceNumbe
 	}
 }
 
-// shouldUpdateSequence determines whether a new larger sequence number is available
-func (f *FirehoseWriter) shouldUpdateSequence(sequenceNumber *big.Int, subSequenceNumber int) bool {
-	return f.largestSeq == nil || sequenceNumber.Cmp(f.largestSeq) == 1 ||
-		(sequenceNumber.Cmp(f.largestSeq) == 0 && subSequenceNumber > f.largestSubSeq)
-}
-
 func (f *FirehoseWriter) ProcessRecords(records []kcl.Record, checkpointer kcl.Checkpointer) error {
 	for _, record := range records {
 		// Wait until rate limiter permits one record to be processed
@@ -138,35 +131,35 @@ func (f *FirehoseWriter) ProcessRecords(records []kcl.Record, checkpointer kcl.C
 		if err != nil {
 			return err
 		}
-		msg := string(data)
 
 		// Write the message to firehose
-		err = f.processMessage(msg)
+		atomic.AddInt64(&f.recvRecordCount, 1)
+
+		// TODO: Fully decode the message
+		fields := map[string]interface{}{
+			"rawlog": string(data),
+		}
+
+		msg, err := json.Marshal(fields)
 		if err != nil {
+			atomic.AddInt64(&f.failedRecordCount, 1)
 			return err
 		}
 
-		// Handle checkpointing
-		seqNumber := new(big.Int)
-		if _, ok := seqNumber.SetString(record.SequenceNumber, 10); !ok {
-			fmt.Fprintf(os.Stderr, "could not parse sequence number '%s'\n", record.SequenceNumber)
-			continue
-		}
-		if f.shouldUpdateSequence(seqNumber, record.SubSequenceNumber) {
-			f.largestSeq = seqNumber
-			f.largestSubSeq = record.SubSequenceNumber
+		err = f.messageBatcher.AddMessage(msg, record.SequenceNumber, record.SubSequenceNumber)
+		if err != nil {
+			return err
 		}
 	}
+	// Checkpoint Kinesis stream
 	if time.Now().Sub(f.lastCheckpoint) > f.checkpointFreq {
-		f.checkpoint(checkpointer, f.largestSeq.String(), f.largestSubSeq)
+		f.checkpoint(checkpointer, f.largestSeqFlushed.String(), f.largestSubSeqFlushed)
 		f.lastCheckpoint = time.Now()
 
 		// Write status to file
-		err := appendToFile(f.logFile, fmt.Sprintf("%s -- %s\n", f.shardID, f.Status()))
-		if err != nil {
-			return err
-		}
+		appendToFile(f.logFile, fmt.Sprintf("%s -- Received:%d Sent:%d Failed:%d\n", f.shardID, f.recvRecordCount, f.sentRecordCount, f.failedRecordCount))
 	}
+
 	return nil
 }
 
@@ -187,7 +180,6 @@ func appendToFile(filename, text string) error {
 func (f *FirehoseWriter) Shutdown(checkpointer kcl.Checkpointer, reason string) error {
 	if reason == "TERMINATE" {
 		fmt.Fprintf(os.Stderr, "Was told to terminate, will attempt to checkpoint.\n")
-		f.FlushAll()
 		f.checkpoint(checkpointer, "", 0)
 	} else {
 		fmt.Fprintf(os.Stderr, "Shutting down due to failover. Reason: %s. Will not checkpoint.\n", reason)
@@ -195,26 +187,8 @@ func (f *FirehoseWriter) Shutdown(checkpointer kcl.Checkpointer, reason string) 
 	return nil
 }
 
-// ProcessMessage reads an input string and adds it to the batcher, which will ultimately send it
-func (f *FirehoseWriter) processMessage(msg string) error {
-	atomic.AddInt64(&f.recvRecordCount, 1)
-
-	// TODO: Fully decode the message
-	fields := map[string]interface{}{
-		"rawlog": msg,
-	}
-
-	record, err := json.Marshal(fields)
-	if err != nil {
-		atomic.AddInt64(&f.failedRecordCount, 1)
-		return err
-	}
-
-	return f.messageBatcher.AddMessage(record)
-}
-
-// Flush writes a batch of records to AWS Firehose
-func (f *FirehoseWriter) Flush(batch [][]byte) {
+// SendBatch writes a batch of records to AWS Firehose
+func (f *FirehoseWriter) SendBatch(batch [][]byte, sequenceNumber *big.Int, subSequenceNumber int) {
 	// Construct the array of firehose.Records
 	awsRecords := make([]*firehose.Record, len(batch))
 	for idx, record := range batch {
@@ -239,14 +213,10 @@ func (f *FirehoseWriter) Flush(batch [][]byte) {
 		sentCount -= *output.FailedPutCount
 	}
 	atomic.AddInt64(&f.sentRecordCount, sentCount)
-}
 
-// Status returns the number of received, sent, and failed records
-func (f *FirehoseWriter) Status() string {
-	return fmt.Sprintf("Received:%d Sent:%d Failed:%d", f.recvRecordCount, f.sentRecordCount, f.failedRecordCount)
-}
-
-// FlushAll flushes all remaining messages in the batcher.
-func (f *FirehoseWriter) FlushAll() {
-	f.messageBatcher.Flush()
+	// Track largest sequence number flushed, so we can:
+	// - checkpoint that sequence number in ProcessRecords
+	// - TODO: prevent ProcessRecords from getting too far ahead of last message successfully flushed
+	f.largestSeqFlushed = sequenceNumber
+	f.largestSubSeqFlushed = subSequenceNumber
 }

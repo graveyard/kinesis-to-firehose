@@ -2,6 +2,7 @@ package batcher
 
 import (
 	"fmt"
+	"math/big"
 	"testing"
 	"time"
 
@@ -22,7 +23,7 @@ func NewMockSync() *mockSync {
 	}
 }
 
-func (m *mockSync) Flush(b [][]byte) {
+func (m *mockSync) SendBatch(b [][]byte, largestSeq *big.Int, largetsSubSeq int) {
 	m.batches = append(m.batches, batch(b))
 	m.flushChan <- struct{}{}
 }
@@ -36,6 +37,9 @@ func (m *mockSync) waitForFlush(timeout time.Duration) error {
 	}
 }
 
+const mockSequenceNumber = "99999"
+const mockSubSequenceNumber = 12345
+
 func TestBatchingByCount(t *testing.T) {
 	var err error
 	assert := assert.New(t)
@@ -46,9 +50,9 @@ func TestBatchingByCount(t *testing.T) {
 	batcher.FlushCount(2)
 
 	t.Log("Batcher respect count limit")
-	assert.NoError(batcher.Send([]byte("hihi")))
-	assert.NoError(batcher.Send([]byte("heyhey")))
-	assert.NoError(batcher.Send([]byte("hmmhmm"))) // Shouldn't be in first batch
+	assert.NoError(batcher.AddMessage([]byte("hihi"), mockSequenceNumber, mockSubSequenceNumber))
+	assert.NoError(batcher.AddMessage([]byte("heyhey"), mockSequenceNumber, mockSubSequenceNumber))
+	assert.NoError(batcher.AddMessage([]byte("hmmhmm"), mockSequenceNumber, mockSubSequenceNumber))
 
 	err = sync.waitForFlush(time.Millisecond * 10)
 	assert.NoError(err)
@@ -73,7 +77,7 @@ func TestBatchingByTime(t *testing.T) {
 	batcher.FlushCount(2000000)
 
 	t.Log("Batcher sends partial batches when time expires")
-	assert.NoError(batcher.Send([]byte("hihi")))
+	assert.NoError(batcher.AddMessage([]byte("hihi"), mockSequenceNumber, mockSubSequenceNumber))
 
 	err = sync.waitForFlush(time.Millisecond * 10)
 	assert.NoError(err)
@@ -83,8 +87,8 @@ func TestBatchingByTime(t *testing.T) {
 	assert.Equal("hihi", string(sync.batches[0][0]))
 
 	t.Log("Batcher sends all messsages in partial batches when time expires")
-	assert.NoError(batcher.Send([]byte("heyhey")))
-	assert.NoError(batcher.Send([]byte("yoyo")))
+	assert.NoError(batcher.AddMessage([]byte("heyhey"), mockSequenceNumber, mockSubSequenceNumber))
+	assert.NoError(batcher.AddMessage([]byte("yoyo"), mockSequenceNumber, mockSubSequenceNumber))
 
 	err = sync.waitForFlush(time.Millisecond * 10)
 	assert.NoError(err)
@@ -110,7 +114,7 @@ func TestBatchingBySize(t *testing.T) {
 	batcher.FlushSize(8)
 
 	t.Log("Large messages are sent immediately")
-	assert.NoError(batcher.Send([]byte("hellohello")))
+	assert.NoError(batcher.AddMessage([]byte("hellohello"), mockSequenceNumber, mockSubSequenceNumber))
 
 	err = sync.waitForFlush(time.Millisecond * 10)
 	assert.NoError(err)
@@ -120,8 +124,8 @@ func TestBatchingBySize(t *testing.T) {
 	assert.Equal("hellohello", string(sync.batches[0][0]))
 
 	t.Log("Batcher tries not to exceed size limit")
-	assert.NoError(batcher.Send([]byte("heyhey")))
-	assert.NoError(batcher.Send([]byte("hihi")))
+	assert.NoError(batcher.AddMessage([]byte("heyhey"), mockSequenceNumber, mockSubSequenceNumber))
+	assert.NoError(batcher.AddMessage([]byte("hihi"), mockSequenceNumber, mockSubSequenceNumber))
 
 	err = sync.waitForFlush(time.Millisecond * 10)
 	assert.NoError(err)
@@ -131,7 +135,7 @@ func TestBatchingBySize(t *testing.T) {
 	assert.Equal("heyhey", string(sync.batches[1][0]))
 
 	t.Log("Batcher sends messages that didn't fit in previous batch")
-	assert.NoError(batcher.Send([]byte("yoyo"))) // At this point "hihi" is in the batch
+	assert.NoError(batcher.AddMessage([]byte("yoyo"), mockSequenceNumber, mockSubSequenceNumber)) // At this point "hihi" is in the batch
 
 	err = sync.waitForFlush(time.Millisecond * 10)
 	assert.NoError(err)
@@ -142,7 +146,7 @@ func TestBatchingBySize(t *testing.T) {
 	assert.Equal("yoyo", string(sync.batches[2][1]))
 
 	t.Log("Batcher doesn't send partial batches")
-	assert.NoError(batcher.Send([]byte("okok")))
+	assert.NoError(batcher.AddMessage([]byte("okok"), mockSequenceNumber, mockSubSequenceNumber))
 
 	err = sync.waitForFlush(time.Millisecond * 10)
 	assert.Error(err)
@@ -158,7 +162,7 @@ func TestFlushing(t *testing.T) {
 	batcher.FlushCount(2000000)
 
 	t.Log("Calling flush sends pending messages")
-	assert.NoError(batcher.Send([]byte("hihi")))
+	assert.NoError(batcher.AddMessage([]byte("hihi"), mockSequenceNumber, mockSubSequenceNumber))
 
 	err = sync.waitForFlush(time.Millisecond * 10)
 	assert.Error(err)
@@ -181,6 +185,6 @@ func TestSendingEmpty(t *testing.T) {
 	batcher := New(sync)
 
 	t.Log("An error is returned when an empty message is sent")
-	err = batcher.Send([]byte{})
+	err = batcher.AddMessage([]byte{}, mockSequenceNumber, mockSubSequenceNumber)
 	assert.Error(err)
 }
