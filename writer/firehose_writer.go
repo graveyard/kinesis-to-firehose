@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/Clever/amazon-kinesis-client-go/kcl"
-	"github.com/Clever/heka-clever-plugins/batcher"
+	"github.com/Clever/kinesis-to-firehose/batcher"
 	"github.com/aws/aws-sdk-go/service/firehose"
 	iface "github.com/aws/aws-sdk-go/service/firehose/firehoseiface"
 	"golang.org/x/time/rate"
@@ -210,7 +210,7 @@ func (f *FirehoseWriter) processMessage(msg string) error {
 		return err
 	}
 
-	return f.messageBatcher.Send(record)
+	return f.messageBatcher.AddMessage(record)
 }
 
 // Flush writes a batch of records to AWS Firehose
