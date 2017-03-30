@@ -12,8 +12,10 @@ import (
 type batch [][]byte
 
 type mockSync struct {
-	flushChan chan struct{}
-	batches   []batch
+	flushChan     chan struct{}
+	batches       []batch
+	largestSeq    *big.Int
+	largestSubSeq int
 }
 
 func NewMockSync() *mockSync {
@@ -23,7 +25,7 @@ func NewMockSync() *mockSync {
 	}
 }
 
-func (m *mockSync) SendBatch(b [][]byte, largestSeq *big.Int, largetsSubSeq int) {
+func (m *mockSync) SendBatch(b [][]byte, largestSeq *big.Int, largestSubSeq int) {
 	m.batches = append(m.batches, batch(b))
 	m.flushChan <- struct{}{}
 }
@@ -187,4 +189,32 @@ func TestSendingEmpty(t *testing.T) {
 	t.Log("An error is returned when an empty message is sent")
 	err = batcher.AddMessage([]byte{}, mockSequenceNumber, mockSubSequenceNumber)
 	assert.Error(err)
+}
+
+func TestUpdatingSequence(t *testing.T) {
+	assert := assert.New(t)
+
+	sync := NewMockSync()
+	batcher := New(sync)
+
+	t.Log("An error is returned when an empty message is sent")
+
+	t.Log("Initally, largestSeq is undefined")
+	expected := new(big.Int)
+	assert.Nil(batcher.largestSeq)
+
+	t.Log("After AddMessage (seq=1), largestSeq = 1")
+	assert.NoError(batcher.AddMessage([]byte("abab"), "1", mockSubSequenceNumber))
+	expected.SetInt64(1)
+	assert.True(expected.Cmp(batcher.largestSeq) == 0)
+
+	t.Log("After AddMessage (seq=2), largestSeq = 2")
+	assert.NoError(batcher.AddMessage([]byte("cdcd"), "2", mockSubSequenceNumber))
+	expected.SetInt64(2)
+	assert.True(expected.Cmp(batcher.largestSeq) == 0)
+
+	t.Log("After AddMessage (seq=1), largestSeq = 2 -- not updated because lower")
+	assert.NoError(batcher.AddMessage([]byte("efef"), "1", mockSubSequenceNumber))
+	assert.True(expected.Cmp(batcher.largestSeq) == 0)
+
 }

@@ -3,7 +3,6 @@ package batcher
 import (
 	"fmt"
 	"math/big"
-	"os"
 	"time"
 )
 
@@ -79,16 +78,18 @@ func (b *batcher) AddMessage(msg []byte, sequenceNumber string, subSequenceNumbe
 	}
 
 	b.msgChan <- msg
-	b.updateSequenceNumber(sequenceNumber, subSequenceNumber)
+	err := b.updateSequenceNumber(sequenceNumber, subSequenceNumber)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
 // updateSequenceNumber updates sequence number on the batch, if a larger one is available
-func (b *batcher) updateSequenceNumber(sequenceNumber string, subSequenceNumber int) {
+func (b *batcher) updateSequenceNumber(sequenceNumber string, subSequenceNumber int) error {
 	seqNumBig := new(big.Int)
 	if _, ok := seqNumBig.SetString(sequenceNumber, 10); !ok {
-		fmt.Fprintf(os.Stderr, "could not parse sequence number '%s'\n", sequenceNumber)
-		return
+		return fmt.Errorf("could not parse sequence number '%s'", sequenceNumber)
 	}
 
 	// Check if new seqNumBig is larger
@@ -96,6 +97,7 @@ func (b *batcher) updateSequenceNumber(sequenceNumber string, subSequenceNumber 
 		b.largestSeq = seqNumBig
 		b.largestSubSeq = subSequenceNumber
 	}
+	return nil
 }
 
 func (b *batcher) Flush() {
