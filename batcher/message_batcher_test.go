@@ -48,8 +48,8 @@ func TestBatchingByCount(t *testing.T) {
 
 	sync := NewMockSync()
 	batcher := New(sync)
-	batcher.FlushInterval(time.Hour)
-	batcher.FlushCount(2)
+	batcher.SetFlushInterval(time.Hour)
+	batcher.SetFlushCount(2)
 
 	t.Log("Batcher respect count limit")
 	assert.NoError(batcher.AddMessage([]byte("hihi"), mockSequenceNumber, mockSubSequenceNumber))
@@ -75,8 +75,8 @@ func TestBatchingByTime(t *testing.T) {
 
 	sync := NewMockSync()
 	batcher := New(sync)
-	batcher.FlushInterval(time.Millisecond)
-	batcher.FlushCount(2000000)
+	batcher.SetFlushInterval(time.Millisecond)
+	batcher.SetFlushCount(2000000)
 
 	t.Log("Batcher sends partial batches when time expires")
 	assert.NoError(batcher.AddMessage([]byte("hihi"), mockSequenceNumber, mockSubSequenceNumber))
@@ -111,9 +111,9 @@ func TestBatchingBySize(t *testing.T) {
 
 	sync := NewMockSync()
 	batcher := New(sync)
-	batcher.FlushInterval(time.Hour)
-	batcher.FlushCount(2000000)
-	batcher.FlushSize(8)
+	batcher.SetFlushInterval(time.Hour)
+	batcher.SetFlushCount(2000000)
+	batcher.SetFlushSize(8)
 
 	t.Log("Large messages are sent immediately")
 	assert.NoError(batcher.AddMessage([]byte("hellohello"), mockSequenceNumber, mockSubSequenceNumber))
@@ -160,8 +160,8 @@ func TestFlushing(t *testing.T) {
 
 	sync := NewMockSync()
 	batcher := New(sync)
-	batcher.FlushInterval(time.Hour)
-	batcher.FlushCount(2000000)
+	batcher.SetFlushInterval(time.Hour)
+	batcher.SetFlushCount(2000000)
 
 	t.Log("Calling flush sends pending messages")
 	assert.NoError(batcher.AddMessage([]byte("hihi"), mockSequenceNumber, mockSubSequenceNumber))
@@ -195,9 +195,7 @@ func TestUpdatingSequence(t *testing.T) {
 	assert := assert.New(t)
 
 	sync := NewMockSync()
-	batcher := New(sync)
-
-	t.Log("An error is returned when an empty message is sent")
+	batcher := New(sync).(*batcher)
 
 	t.Log("Initally, largestSeq is undefined")
 	expected := new(big.Int)

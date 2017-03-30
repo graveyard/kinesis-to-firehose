@@ -6,25 +6,24 @@ import (
 	"time"
 )
 
+// Sync is used to allow a writer to syncronize with the batcher.
+// The writer declares how to write messages (via its `SendBatch` method), while the batcher
+// keeps track of messages written
 type Sync interface {
 	SendBatch(batch [][]byte, largestSeq *big.Int, largetsSubSeq int)
 }
 
 type Batcher interface {
-	// Interval at which accumulated messages should be bulk put to
-	// firehose (default 1 second).
-	FlushInterval(dur time.Duration)
-	// Number of messages that triggers a push to firehose
-	// default to 10
-	FlushCount(count int)
-	// Size of batch that triggers a push to firehose
-	// default to 1mb (1024 * 1024)
-	FlushSize(size int)
+	// SetFlushInterval how often accumulated messages should be flushed (default 1 second).
+	SetFlushInterval(dur time.Duration)
+	// SetFlushCount sets number of messages that trigger a flush (default 10).
+	SetFlushCount(count int)
+	// SetFlushSize sets size of batch that triggers a flush (default 1024 * 1024 = 1 mb)
+	SetFlushSize(size int)
 
-	//AddMesage to the batch
+	// AddMesage to the batch
 	AddMessage(msg []byte, sequenceNumber string, subSequenceNumber int) error
-
-	//Flush all messages from the batch
+	// Flush all messages from the batch
 	Flush()
 }
 
@@ -33,6 +32,8 @@ type batcher struct {
 	flushCount    int
 	flushSize     int
 
+	// largestSeq and largestSubSeq are used to track the highest sequence number
+	// of any record in the batch. This is used for checkpointing.
 	largestSeq    *big.Int
 	largestSubSeq int
 
@@ -41,7 +42,8 @@ type batcher struct {
 	flushChan chan<- struct{}
 }
 
-func New(sync Sync) *batcher {
+// New creates a new Batcher
+func New(sync Sync) Batcher {
 	msgChan := make(chan []byte, 100)
 	flushChan := make(chan struct{})
 
@@ -60,15 +62,15 @@ func New(sync Sync) *batcher {
 	return b
 }
 
-func (b *batcher) FlushInterval(dur time.Duration) {
+func (b *batcher) SetFlushInterval(dur time.Duration) {
 	b.flushInterval = dur
 }
 
-func (b *batcher) FlushCount(count int) {
+func (b *batcher) SetFlushCount(count int) {
 	b.flushCount = count
 }
 
-func (b *batcher) FlushSize(size int) {
+func (b *batcher) SetFlushSize(size int) {
 	b.flushSize = size
 }
 
@@ -77,15 +79,18 @@ func (b *batcher) AddMessage(msg []byte, sequenceNumber string, subSequenceNumbe
 		return fmt.Errorf("Empty messages can't be sent")
 	}
 
-	b.msgChan <- msg
 	err := b.updateSequenceNumber(sequenceNumber, subSequenceNumber)
 	if err != nil {
 		return err
 	}
+
+	b.msgChan <- msg
 	return nil
 }
 
-// updateSequenceNumber updates sequence number on the batch, if a larger one is available
+// updateSequenceNumber is used to track the highest sequenceNumber of any record in the batch.
+// When flush() is called, the batcher sends the sequence number to the writer. When the writer
+// checkpoints, it does so up to the latest message that was flushed successfully.
 func (b *batcher) updateSequenceNumber(sequenceNumber string, subSequenceNumber int) error {
 	seqNumBig := new(big.Int)
 	if _, ok := seqNumBig.SetString(sequenceNumber, 10); !ok {

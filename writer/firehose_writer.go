@@ -79,9 +79,9 @@ func NewFirehoseWriter(config FirehoseWriterConfig, limiter *rate.Limiter) (*Fir
 	}
 
 	f.messageBatcher = batcher.New(f)
-	f.messageBatcher.FlushCount(config.FlushCount)
-	f.messageBatcher.FlushInterval(config.FlushInterval)
-	f.messageBatcher.FlushSize(config.FlushSize)
+	f.messageBatcher.SetFlushCount(config.FlushCount)
+	f.messageBatcher.SetFlushInterval(config.FlushInterval)
+	f.messageBatcher.SetFlushSize(config.FlushSize)
 
 	return f, nil
 }
@@ -171,6 +171,7 @@ func (f *FirehoseWriter) processRecord(record kcl.Record) error {
 func (f *FirehoseWriter) Shutdown(checkpointer kcl.Checkpointer, reason string) error {
 	if reason == "TERMINATE" {
 		fmt.Fprintf(os.Stderr, "Was told to terminate, will attempt to checkpoint.\n")
+		f.messageBatcher.Flush()
 		f.checkpoint(checkpointer, "", 0)
 	} else {
 		fmt.Fprintf(os.Stderr, "Shutting down due to failover. Reason: %s. Will not checkpoint.\n", reason)
