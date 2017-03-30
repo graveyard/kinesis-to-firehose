@@ -123,34 +123,16 @@ func (f *FirehoseWriter) checkpoint(checkpointer kcl.Checkpointer, sequenceNumbe
 
 func (f *FirehoseWriter) ProcessRecords(records []kcl.Record, checkpointer kcl.Checkpointer) error {
 	for _, record := range records {
-		// Wait until rate limiter permits one record to be processed
+		// Wait until rate limiter permits one more record to be processed
 		f.rateLimiter.Wait(context.Background())
-
-		// Base64 decode the record
-		data, err := base64.StdEncoding.DecodeString(record.Data)
-		if err != nil {
-			return err
-		}
-
-		// Write the message to firehose
 		atomic.AddInt64(&f.recvRecordCount, 1)
-
-		// TODO: Fully decode the message
-		fields := map[string]interface{}{
-			"rawlog": string(data),
-		}
-
-		msg, err := json.Marshal(fields)
+		err := f.processRecord(record)
 		if err != nil {
 			atomic.AddInt64(&f.failedRecordCount, 1)
-			return err
-		}
-
-		err = f.messageBatcher.AddMessage(msg, record.SequenceNumber, record.SubSequenceNumber)
-		if err != nil {
-			return err
+			continue
 		}
 	}
+
 	// Checkpoint Kinesis stream
 	if time.Now().Sub(f.lastCheckpoint) > f.checkpointFreq {
 		f.checkpoint(checkpointer, f.largestSeqFlushed.String(), f.largestSubSeqFlushed)
@@ -158,6 +140,30 @@ func (f *FirehoseWriter) ProcessRecords(records []kcl.Record, checkpointer kcl.C
 
 		// Write status to file
 		appendToFile(f.logFile, fmt.Sprintf("%s -- Received:%d Sent:%d Failed:%d\n", f.shardID, f.recvRecordCount, f.sentRecordCount, f.failedRecordCount))
+	}
+
+	return nil
+}
+
+func (f *FirehoseWriter) processRecord(record kcl.Record) error {
+	// Base64 decode the record
+	data, err := base64.StdEncoding.DecodeString(record.Data)
+	if err != nil {
+		return err
+	}
+
+	// TODO: Fully decode the message
+	fields := map[string]interface{}{
+		"rawlog": string(data),
+	}
+	msg, err := json.Marshal(fields)
+	if err != nil {
+		return err
+	}
+
+	err = f.messageBatcher.AddMessage(msg, record.SequenceNumber, record.SubSequenceNumber)
+	if err != nil {
+		return err
 	}
 
 	return nil
