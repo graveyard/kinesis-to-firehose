@@ -15,14 +15,18 @@ import (
 	"github.com/Clever/kinesis-to-firehose/writer"
 )
 
+var stdErrLogger = log.New(os.Stderr, "", log.Ldate|log.Ltime)
+
 func main() {
+	// Create a log file and make the standard logger write to it (across all packages)
 	logFile := getEnv("LOG_FILE")
 
 	f, err := os.Create(logFile)
 	if err != nil {
-		panic(err)
+		stdErrLogger.Fatalf("Unable to create log file: %s", err.Error())
 	}
 	defer f.Close()
+	log.SetOutput(f)
 
 	sess := session.Must(session.NewSession(aws.NewConfig().WithRegion(getEnv("FIREHOSE_AWS_REGION")).WithMaxRetries(4)))
 	config := writer.FirehoseWriterConfig{
@@ -38,14 +42,14 @@ func main() {
 	// because a consumer is created for each shard, we can think of this as records-per-second-per-shard
 	rl, err := strconv.ParseFloat(getEnv("RATE_LIMIT"), 64)
 	if err != nil {
-		log.Fatalf("Invalid RATE_LIMIT: %s", err.Error())
+		stdErrLogger.Fatalf("Invalid RATE_LIMIT: %s", err.Error())
 	}
 	rateLimit := rate.Limit(rl)
 	burstLimit := int(rl * 1.2)
 
 	writer, err := writer.NewFirehoseWriter(config, rate.NewLimiter(rateLimit, burstLimit))
 	if err != nil {
-		log.Fatalf("Failed to create FirehoseWriter: %s", err.Error())
+		stdErrLogger.Fatalf("Failed to create FirehoseWriter: %s", err.Error())
 	}
 	kclProcess := kcl.New(os.Stdin, os.Stdout, os.Stderr, writer)
 	kclProcess.Run()
@@ -55,7 +59,7 @@ func main() {
 func getEnv(envVar string) string {
 	val := os.Getenv(envVar)
 	if val == "" {
-		log.Fatalf("Must specify env variable %s", envVar)
+		stdErrLogger.Fatalf("Must specify env variable %s", envVar)
 	}
 	return val
 }

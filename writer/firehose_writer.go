@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"log"
 	"math/big"
 	"os"
 	"sync/atomic"
@@ -137,9 +138,7 @@ func (f *FirehoseWriter) ProcessRecords(records []kcl.Record, checkpointer kcl.C
 	if time.Now().Sub(f.lastCheckpoint) > f.checkpointFreq {
 		f.checkpoint(checkpointer, f.largestSeqFlushed.String(), f.largestSubSeqFlushed)
 		f.lastCheckpoint = time.Now()
-
-		// Write status to file
-		appendToFile(f.logFile, fmt.Sprintf("%s -- Received:%d Sent:%d Failed:%d\n", f.shardID, f.recvRecordCount, f.sentRecordCount, f.failedRecordCount))
+		log.Printf(fmt.Sprintf("%s -- Received:%d Sent:%d Failed:%d\n", f.shardID, f.recvRecordCount, f.sentRecordCount, f.failedRecordCount))
 	}
 
 	return nil
@@ -163,20 +162,6 @@ func (f *FirehoseWriter) processRecord(record kcl.Record) error {
 
 	err = f.messageBatcher.AddMessage(msg, record.SequenceNumber, record.SubSequenceNumber)
 	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func appendToFile(filename, text string) error {
-	f, err := os.OpenFile(filename, os.O_APPEND|os.O_WRONLY, 0600)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-
-	if _, err = f.WriteString(text); err != nil {
 		return err
 	}
 
