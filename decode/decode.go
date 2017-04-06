@@ -126,7 +126,24 @@ func ParseAndEnhance(line string, env string) (map[string]interface{}, error) {
 	// Inject additional business-logic fields
 	out["rawlog"] = rawlog
 	out["env"] = env
-	meta, err := getContainerMeta(programname, "", "", "")
+
+	// Sometimes its useful to force `container_{env,app,task}`. A specific use-case is writing Docker events.
+	// A separate container monitors for start/stop events, but we set the container values in such a way that
+	// the logs for these events will appear in context for the app that the user is looking at instead of the
+	// docker-events app.
+	forceEnv := ""
+	forceApp := ""
+	forceTask := ""
+	if cEnv, ok := out["container_env"]; ok {
+		forceEnv = cEnv.(string)
+	}
+	if cApp, ok := out["container_app"]; ok {
+		forceApp = cApp.(string)
+	}
+	if cTask, ok := out["container_task"]; ok {
+		forceTask = cTask.(string)
+	}
+	meta, err := getContainerMeta(programname, forceEnv, forceApp, forceTask)
 	if err == nil {
 		for k, v := range meta {
 			out[k] = v
@@ -142,7 +159,7 @@ const containerMeta = `([a-z-]+)--([a-z-]+)\/` + // env--app
 
 var containerMetaRegex = regexp.MustCompile(containerMeta)
 
-func getContainerMeta(programname, force_env, force_app, force_task string) (map[string]string, error) {
+func getContainerMeta(programname, forceEnv, forceApp, forceTask string) (map[string]string, error) {
 	if programname == "" {
 		return map[string]string{}, fmt.Errorf("no programname")
 	}
@@ -157,14 +174,14 @@ func getContainerMeta(programname, force_env, force_app, force_task string) (map
 		task = matches[0][4]
 	}
 
-	if force_env != "" {
-		env = force_env
+	if forceEnv != "" {
+		env = forceEnv
 	}
-	if force_app != "" {
-		app = force_app
+	if forceApp != "" {
+		app = forceApp
 	}
-	if force_task != "" {
-		task = force_task
+	if forceTask != "" {
+		task = forceTask
 	}
 
 	if env == "" || app == "" || task == "" {
