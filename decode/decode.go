@@ -34,11 +34,14 @@ var remapSyslog3164Keys = map[string]string{
 	"content":   "Payload",
 }
 
-// parseRsyslog handles two Rsyslog formats
+// FieldsFromSyslog takes an RSyslog formatted log line and extracts fields from it
+//
+// Supports two log lines formats:
 // - RSYSLOG_TraditionalFileFormat - the "old style" default log file format with low-precision timestamps (RFC3164)
-// - RSYSLOG_FileFormat - a modern-style logfile format similar to TraditionalFileFormat, buth with high-precision timestamps and timezone information
+// - RSYSLOG_FileFormat - a modern-style logfile format similar to TraditionalFileFormat, but with high-precision timestamps and timezone information
+//
 // For more details on Rsylog formats: https://rsyslog-5-8-6-doc.neocities.org/rsyslog_conf_templates.html
-func parseRsyslog(line string) (map[string]interface{}, error) {
+func FieldsFromSyslog(line string) (map[string]interface{}, error) {
 	// rfc3164 includes a severity number in front of the Syslog line, but we don't use that
 	fakeSeverity := "<12>"
 	p3164 := rfc3164.NewParser([]byte(fakeSeverity + line))
@@ -54,10 +57,6 @@ func parseRsyslog(line string) (map[string]interface{}, error) {
 		}
 	}
 	return out, nil
-}
-
-func FieldsFromSyslog(line string) (map[string]interface{}, error) {
-	return parseRsyslog(line)
 }
 
 // FieldsFromKayvee takes a log line and extracts fields from the Kayvee (JSON) part

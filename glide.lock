@@ -1,5 +1,5 @@
-hash: 22ca6a3bbe1177f204bf4c58c85778853104fa6d06a4879ab1229fd5e41352db
-updated: 2017-03-22T16:23:18.301726515-07:00
+hash: baf6512ee101e52f373388d5a14a3cbf5293105e669b03ce75621ff62b28fa82
+updated: 2017-03-30T16:54:05.9509336-07:00
 imports:
 - name: github.com/aws/aws-sdk-go
   version: 819b71cf8430e434c1eee7e7e8b0f2b8870be899
@@ -41,10 +41,8 @@ imports:
   - batcher
 - name: github.com/go-ini/ini
   version: 6e4869b434bd001f6983749881c7ead3545887d8
-- name: github.com/golang/mock
-  version: bd3c8e81be01eef76d4b503f5e687d2d1354d2d9
-  subpackages:
-  - gomock
+- name: github.com/jeromer/syslogparser
+  version: 0e4ae46ea3f08de351074b643d649d5d00661a3c
 - name: github.com/jmespath/go-jmespath
   version: bd40a432e4c76585ef6b72d3fd96fb9b6dc7b68d
 - name: golang.org/x/net
@@ -55,10 +53,6 @@ imports:
   version: f51c12702a4d776e4c1fa9b0fabab841babae631
   subpackages:
   - rate
-- name: gopkg.in/Clever/kayvee-go.v3
-  version: 056c92dcc68b40c5d6045f755197b3776f914154
-  subpackages:
-  - logger
 testImports:
 - name: github.com/davecgh/go-spew
   version: 6d212800a42e8ab5c146b8ace3490ee17e5225f9
