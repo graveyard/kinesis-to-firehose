@@ -8,6 +8,7 @@ env:
 - FIREHOSE_STREAM_NAME
 - LOG_FILE
 - RATE_LIMIT
+- DEPLOY_ENV
 resources:
   cpu: 1.0
   max_mem: 2.0

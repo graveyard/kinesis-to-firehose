@@ -30,12 +30,13 @@ func main() {
 
 	sess := session.Must(session.NewSession(aws.NewConfig().WithRegion(getEnv("FIREHOSE_AWS_REGION")).WithMaxRetries(4)))
 	config := writer.FirehoseWriterConfig{
-		FirehoseClient: firehose.New(sess),
-		StreamName:     getEnv("FIREHOSE_STREAM_NAME"),
-		FlushInterval:  10 * time.Second,
-		FlushCount:     500,
-		FlushSize:      4 * 1024 * 1024, // 4Mb
-		LogFile:        logFile,
+		FirehoseClient:    firehose.New(sess),
+		StreamName:        getEnv("FIREHOSE_STREAM_NAME"),
+		FlushInterval:     10 * time.Second,
+		FlushCount:        500,
+		FlushSize:         4 * 1024 * 1024, // 4Mb
+		LogFile:           logFile,
+		DeployEnvironment: getEnv("DEPLOY_ENV"),
 	}
 
 	// rateLimit is expressed in records-per-second

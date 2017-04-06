@@ -19,6 +19,7 @@ FIREHOSE_AWS_REGION=us-west-2 \
 FIREHOSE_STREAM_NAME=firehose-test \
 LOG_FILE=/tmp/kcl_stderr \
 RATE_LIMIT=100 \
+DEPLOY_ENV="local" \
 make run
 ```
 
