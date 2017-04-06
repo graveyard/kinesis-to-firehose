@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/Clever/syslogparser/rfc3164"
-	// "github.com/satyrius/gonx"
 )
 
 // reservedFields are automatically set during decoding.
@@ -123,7 +122,7 @@ func ParseAndEnhance(line string, env string) (map[string]interface{}, error) {
 		}
 	}
 
-	// Inject additional business-logic fields
+	// Inject additional fields that are useful in log-searching and other business logic
 	out["rawlog"] = rawlog
 	out["env"] = env
 
@@ -195,24 +194,3 @@ func getContainerMeta(programname, forceEnv, forceApp, forceTask string) (map[st
 		"logtag":         fmt.Sprintf("%s--%s/%s", env, app, task),
 	}, nil
 }
-
-// TODO: Haproxy
-
-// var log_format = `$remote_addr - - [$time_local] "$request_method $request $server_protocol" $status $body_bytes_sent "" "" $client_port $accept_date_ms "$frontend_name" "$backend_name" "$srv_name" $client_time $wait_time $connection_time $tcpinfo_rtt $total_time $termination_state $active_connections $frontend_concurrent_connections $backend_concurrent_connections $server_concurrent_connections $retries $server_queue $backend_queue "$captured_request_cookie" "$captured_response_cookie" "$x_forwarded_for" "$http_user_agent" "$authorization"`
-// var haproxyParser = gonx.NewParser(log_format)
-
-// // FieldsFromHaproxy takes a log line and extracts fields from the Haproxy part
-// func FieldsFromHaproxy(line string) (map[string]interface{}, error) {
-// 	entry, err := haproxyParser.ParseString(line)
-// 	if err != nil {
-// 		return map[string]interface{}{}, err
-// 	}
-
-// 	out := map[string]interface{}{}
-// 	for k, v := range entry {
-// 		out[k] = v
-// 	}
-// 	return out, nil
-// }
-
-// TODO: KayveeRouting
