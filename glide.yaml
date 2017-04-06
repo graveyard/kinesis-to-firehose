@@ -10,3 +10,4 @@ import:
   - rate
 - package: github.com/jeromer/syslogparser
 - package: github.com/Clever/syslogparser
+- package: github.com/satyrius/gonx
