@@ -11,6 +11,7 @@ import (
 )
 
 type Spec struct {
+	Title          string
 	Input          string
 	ExpectedOutput map[string]interface{}
 	ExpectedError  error
@@ -19,6 +20,7 @@ type Spec struct {
 func TestKayveeDecoding(t *testing.T) {
 	specs := []Spec{
 		Spec{
+			Title: "handles just JSON",
 			Input: `{"a":"b"}`,
 			ExpectedOutput: map[string]interface{}{
 				"prefix":  "",
@@ -29,6 +31,7 @@ func TestKayveeDecoding(t *testing.T) {
 			ExpectedError: nil,
 		},
 		Spec{
+			Title: "handles prefix + JSON",
 			Input: `prefix {"a":"b"}`,
 			ExpectedOutput: map[string]interface{}{
 				"prefix":  "prefix ",
@@ -39,6 +42,7 @@ func TestKayveeDecoding(t *testing.T) {
 			ExpectedError: nil,
 		},
 		Spec{
+			Title: "handles JSON + postfix",
 			Input: `{"a":"b"} postfix`,
 			ExpectedOutput: map[string]interface{}{
 				"prefix":  "",
@@ -49,6 +53,7 @@ func TestKayveeDecoding(t *testing.T) {
 			ExpectedError: nil,
 		},
 		Spec{
+			Title: "handles prefix + JSON + postfix",
 			Input: `prefix {"a":"b"} postfix`,
 			ExpectedOutput: map[string]interface{}{
 				"prefix":  "prefix ",
@@ -59,19 +64,21 @@ func TestKayveeDecoding(t *testing.T) {
 			ExpectedError: nil,
 		},
 		Spec{
-			Input:          `prefix { postfix`, // Just a bracket, but no JSON in body
+			Title:          "Returns NonKayveeError if not JSON in body",
+			Input:          `prefix { postfix`,
 			ExpectedOutput: map[string]interface{}{},
 			ExpectedError:  &NonKayveeError{},
 		},
 		Spec{
-			Input:          `prefix {"a:"b"} postfix`, // JSON missing a quote
+			Title:          "errors on invalid JSON (missing a quote)",
+			Input:          `prefix {"a:"b"} postfix`,
 			ExpectedOutput: map[string]interface{}{},
 			ExpectedError:  &json.SyntaxError{},
 		},
 	}
 
 	for _, spec := range specs {
-		t.Run(fmt.Sprintf("input:%s", spec.Input), func(t *testing.T) {
+		t.Run(fmt.Sprintf(spec.Title), func(t *testing.T) {
 			assert := assert.New(t)
 			fields, err := FieldsFromKayvee(spec.Input)
 			if spec.ExpectedError != nil {
@@ -111,16 +118,7 @@ func TestSyslogDecoding(t *testing.T) {
 
 	specs := []Spec{
 		Spec{
-			Input: `Oct 25 10:20:37 localhost anacron[1395]: Some log message`,
-			ExpectedOutput: map[string]interface{}{
-				"Timestamp":   logTime,
-				"Hostname":    "localhost",
-				"programname": "anacron",
-				"Payload":     "Some log message",
-			},
-			ExpectedError: nil,
-		},
-		Spec{
+			Title: "Parses Rsyslog_TraditionalFileFormat with simple log body",
 			Input: `Oct 25 10:20:37 some-host docker/fa3a5e338a47[1294]: log body`,
 			ExpectedOutput: map[string]interface{}{
 				"Timestamp":   logTime,
@@ -131,6 +129,7 @@ func TestSyslogDecoding(t *testing.T) {
 			ExpectedError: nil,
 		},
 		Spec{
+			Title: "Parses Rsyslog_TraditionalFileFormat with haproxy access log body",
 			Input: `Apr  5 21:45:54 influx-service docker/0000aa112233[1234]: [httpd] 2017/04/05 21:45:54 172.17.42.1 - heka [05/Apr/2017:21:45:54 +0000] POST /write?db=foo&precision=ms HTTP/1.1 204 0 - Go 1.1 package http 123456-1234-1234-b11b-000000000000 13.688672ms`,
 			ExpectedOutput: map[string]interface{}{
 				"Timestamp":   logTime2,
@@ -141,6 +140,7 @@ func TestSyslogDecoding(t *testing.T) {
 			ExpectedError: nil,
 		},
 		Spec{
+			Title: "Parses Rsyslog_TraditionalFileFormat",
 			Input: `Apr  5 21:45:54 mongodb-some-machine whackanop: 2017/04/05 21:46:11 found 0 ops`,
 			ExpectedOutput: map[string]interface{}{
 				"Timestamp":   logTime2,
@@ -151,6 +151,7 @@ func TestSyslogDecoding(t *testing.T) {
 			ExpectedError: nil,
 		},
 		Spec{
+			Title: "Parses Rsyslog_ FileFormat with Kayvee payload",
 			Input: `2017-04-05T21:57:46.794862+00:00 ip-10-0-0-0 env--app/arn%3Aaws%3Aecs%3Aus-west-1%3A58961234%3Atask%2Fabcd1234-1a3b-1a3b-1234-d76552f4b7ef[3291]: 2017/04/05 21:57:46 some_file.go:10: {"title":"request_finished"}`,
 			ExpectedOutput: map[string]interface{}{
 				"Timestamp":   logTime3,
@@ -161,13 +162,14 @@ func TestSyslogDecoding(t *testing.T) {
 			ExpectedError: nil,
 		},
 		Spec{
+			Title:          "Fails to parse non-RSyslog log line",
 			Input:          `not rsyslog`,
 			ExpectedOutput: map[string]interface{}{},
 			ExpectedError:  &syslogparser.ParserError{},
 		},
 	}
 	for _, spec := range specs {
-		t.Run(fmt.Sprintf("input:%s", spec.Input), func(t *testing.T) {
+		t.Run(fmt.Sprintf(spec.Title), func(t *testing.T) {
 			assert := assert.New(t)
 			fields, err := FieldsFromSyslog(spec.Input)
 			if spec.ExpectedError != nil {
@@ -192,6 +194,7 @@ func TestParseAndEnhance(t *testing.T) {
 
 	specs := []Spec{
 		Spec{
+			Title: "Parses a Kayvee log line from an ECS app",
 			Input: `2017-04-05T21:57:46.794862+00:00 ip-10-0-0-0 env--app/arn%3Aaws%3Aecs%3Aus-west-1%3A58961234%3Atask%2Fabcd1234-1a3b-1a3b-1234-d76552f4b7ef[3291]: 2017/04/05 21:57:46 some_file.go:10: {"title":"request_finished"}`,
 			ExpectedOutput: map[string]interface{}{
 				"Timestamp":      logTime3,
@@ -212,13 +215,14 @@ func TestParseAndEnhance(t *testing.T) {
 			ExpectedError: nil,
 		},
 		Spec{
+			Title:          "Fails to parse non-RSyslog log line",
 			Input:          `not rsyslog`,
 			ExpectedOutput: map[string]interface{}{},
 			ExpectedError:  &syslogparser.ParserError{},
 		},
 	}
 	for _, spec := range specs {
-		t.Run(fmt.Sprintf("input:%s", spec.Input), func(t *testing.T) {
+		t.Run(fmt.Sprintf(spec.Title), func(t *testing.T) {
 			assert := assert.New(t)
 			fields, err := ParseAndEnhance(spec.Input, "deploy-env")
 			if spec.ExpectedError != nil {
