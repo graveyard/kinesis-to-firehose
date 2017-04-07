@@ -10,8 +10,8 @@ env:
 - RATE_LIMIT
 - DEPLOY_ENV
 resources:
-  cpu: 1.0
-  max_mem: 2.0
+  cpu: .5
+  max_mem: 1.8
 shepherds:
 - "nathan.leiby@clever.com"
 expose: []
