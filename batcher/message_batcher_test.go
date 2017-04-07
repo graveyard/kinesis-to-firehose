@@ -35,7 +35,7 @@ func (m *MockSync) waitForFlush(timeout time.Duration) error {
 	case <-m.flushChan:
 		return nil
 	case <-time.After(timeout):
-		return fmt.Errorf("The flush never came.  I waited %s.", timeout.String())
+		return fmt.Errorf("timed out before flush (waited %s)", timeout.String())
 	}
 }
 
