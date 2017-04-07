@@ -8,3 +8,8 @@ import:
 - package: golang.org/x/time
   subpackages:
   - rate
+- package: github.com/jeromer/syslogparser
+- package: github.com/Clever/syslogparser
+- package: golang.org/x/net
+  subpackages:
+  - context

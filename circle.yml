@@ -14,6 +14,7 @@ compile:
 test:
   override:
   - make test
+  - make bench | tee $CIRCLE_TEST_REPORTS/benchmarks.txt
 deployment:
   always:
     branch: /.*/
@@ -21,5 +22,10 @@ deployment:
     commands:
     - $HOME/ci-scripts/circleci/docker-publish $DOCKER_USER $DOCKER_PASS "$DOCKER_EMAIL" $DOCKER_ORG
     - $HOME/ci-scripts/circleci/catapult-publish $CATAPULT_URL $CATAPULT_USER $CATAPULT_PASS kinesis-to-firehose
+  master-only:
+    branch: master
+    owner: Clever
+    commands:
+    - $HOME/ci-scripts/circleci/dapple-deploy $DAPPLE_URL $DAPPLE_USER $DAPPLE_PASS kinesis-to-firehose
 general:
   build_dir: ../.go_workspace/src/github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME

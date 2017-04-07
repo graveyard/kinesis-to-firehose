@@ -13,14 +13,17 @@ import (
 
 	"github.com/Clever/amazon-kinesis-client-go/kcl"
 	"github.com/Clever/kinesis-to-firehose/batcher"
+	"github.com/Clever/kinesis-to-firehose/decode"
 	"github.com/aws/aws-sdk-go/service/firehose"
 	iface "github.com/aws/aws-sdk-go/service/firehose/firehoseiface"
 	"golang.org/x/time/rate"
 )
 
+// FirehoseWriter is a KCL consumer that writes records to an AWS firehose
 type FirehoseWriter struct {
-	shardID string
-	logFile string
+	shardID   string
+	logFile   string
+	deployEnv string
 
 	// KCL checkpointing
 	sleepDuration        time.Duration
@@ -58,8 +61,12 @@ type FirehoseWriterConfig struct {
 	FlushSize int
 	// LogFile is the path to a log file (we write logs in a file since stdout/stderr are used by KCL)
 	LogFile string
+	// DeployEnvironment is the name of the runtime environment ("development" or "production")
+	// It is used in the decoder to inject an environment into logs.
+	DeployEnvironment string
 }
 
+// NewFirehoseWriter creates a FirehoseWriter
 func NewFirehoseWriter(config FirehoseWriterConfig, limiter *rate.Limiter) (*FirehoseWriter, error) {
 	if config.FlushCount > 500 || config.FlushCount < 1 {
 		return nil, fmt.Errorf("FlushCount must be between 1 and 500 messages")
@@ -76,16 +83,15 @@ func NewFirehoseWriter(config FirehoseWriterConfig, limiter *rate.Limiter) (*Fir
 		checkpointFreq:    60 * time.Second,
 		rateLimiter:       limiter,
 		logFile:           config.LogFile,
+		deployEnv:         config.DeployEnvironment,
 	}
 
-	f.messageBatcher = batcher.New(f)
-	f.messageBatcher.SetFlushCount(config.FlushCount)
-	f.messageBatcher.SetFlushInterval(config.FlushInterval)
-	f.messageBatcher.SetFlushSize(config.FlushSize)
+	f.messageBatcher = batcher.New(f, config.FlushInterval, config.FlushCount, config.FlushSize)
 
 	return f, nil
 }
 
+// Initialize is called when the KCL starts a shard consumer (KCL interface)
 func (f *FirehoseWriter) Initialize(shardID string) error {
 	f.shardID = shardID
 	f.lastCheckpoint = time.Now()
@@ -122,6 +128,7 @@ func (f *FirehoseWriter) checkpoint(checkpointer kcl.Checkpointer, sequenceNumbe
 	}
 }
 
+// ProcessRecords is called when the KCL passes records to the KCL consumer (KCL interface)
 func (f *FirehoseWriter) ProcessRecords(records []kcl.Record, checkpointer kcl.Checkpointer) error {
 	for _, record := range records {
 		// Wait until rate limiter permits one more record to be processed
@@ -151,10 +158,11 @@ func (f *FirehoseWriter) processRecord(record kcl.Record) error {
 		return err
 	}
 
-	// TODO: Fully decode the message
-	fields := map[string]interface{}{
-		"rawlog": string(data),
+	fields, err := decode.ParseAndEnhance(string(data), f.deployEnv)
+	if err != nil {
+		return err
 	}
+
 	msg, err := json.Marshal(fields)
 	if err != nil {
 		return err
@@ -168,6 +176,7 @@ func (f *FirehoseWriter) processRecord(record kcl.Record) error {
 	return nil
 }
 
+// Shutdown is called when the KCL wants to trigger a shutdown of the shard consumer (KCL interface)
 func (f *FirehoseWriter) Shutdown(checkpointer kcl.Checkpointer, reason string) error {
 	if reason == "TERMINATE" {
 		fmt.Fprintf(os.Stderr, "Was told to terminate, will attempt to checkpoint.\n")
