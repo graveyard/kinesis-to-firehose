@@ -32,7 +32,7 @@ var remapSyslog3164Keys = map[string]string{
 	"hostname":  "Hostname",
 	"timestamp": "Timestamp",
 	"tag":       "programname",
-	"content":   "Payload",
+	"content":   "rawlog",
 }
 
 // FieldsFromSyslog takes an RSyslog formatted log line and extracts fields from it
@@ -104,7 +104,7 @@ func ParseAndEnhance(line string, env string) (map[string]interface{}, error) {
 	for k, v := range syslogFields {
 		out[k] = v
 	}
-	rawlog := syslogFields["Payload"].(string)
+	rawlog := syslogFields["rawlog"].(string)
 	programname := syslogFields["programname"].(string)
 
 	// Try pulling Kayvee fields out of message
@@ -123,7 +123,6 @@ func ParseAndEnhance(line string, env string) (map[string]interface{}, error) {
 	}
 
 	// Inject additional fields that are useful in log-searching and other business logic
-	out["rawlog"] = rawlog
 	out["env"] = env
 
 	// Sometimes its useful to force `container_{env,app,task}`. A specific use-case is writing Docker events.
