@@ -168,6 +168,9 @@ func (f *FirehoseWriter) processRecord(record kcl.Record) error {
 		return err
 	}
 
+	// add newline after each record, so that json objects in firehose will apppear one per line
+	msg = append(msg, '\n')
+
 	err = f.messageBatcher.AddMessage(msg, record.SequenceNumber, record.SubSequenceNumber)
 	if err != nil {
 		return err
