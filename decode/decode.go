@@ -29,8 +29,8 @@ func stringInSlice(s string, slice []string) bool {
 // remapSyslog3164Keys renames fields to match our expecations from heka's syslog parser
 // see: https://github.com/mozilla-services/heka/blob/278dd3d5961b9b6e47bb7a912b63ce3faaf8d8bd/sandbox/lua/decoders/rsyslog.lua
 var remapSyslog3164Keys = map[string]string{
-	"hostname":  "Hostname",
-	"timestamp": "Timestamp",
+	"hostname":  "hostname",
+	"timestamp": "timestamp",
 	"tag":       "programname",
 	"content":   "rawlog",
 }
@@ -90,7 +90,7 @@ func FieldsFromKayvee(line string) (map[string]interface{}, error) {
 		}
 	}
 
-	m["Type"] = "Kayvee"
+	m["type"] = "Kayvee"
 
 	return m, nil
 }
