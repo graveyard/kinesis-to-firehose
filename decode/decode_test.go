@@ -232,6 +232,21 @@ func TestParseAndEnhance(t *testing.T) {
 			ExpectedError: nil,
 		},
 		Spec{
+			Title: "Parses a non-Kayvee log line",
+			Input: `2017-04-05T21:57:46.794862+00:00 ip-10-0-0-0 env--app/arn%3Aaws%3Aecs%3Aus-west-1%3A999988887777%3Atask%2Fabcd1234-1a3b-1a3b-1234-d76552f4b7ef[3291]: some log`,
+			ExpectedOutput: map[string]interface{}{
+				"Timestamp":      logTime3,
+				"Hostname":       "ip-10-0-0-0",
+				"programname":    `env--app/arn%3Aaws%3Aecs%3Aus-west-1%3A999988887777%3Atask%2Fabcd1234-1a3b-1a3b-1234-d76552f4b7ef`,
+				"rawlog":         `some log`,
+				"env":            "deploy-env",
+				"container_env":  "env",
+				"container_app":  "app",
+				"container_task": "abcd1234-1a3b-1a3b-1234-d76552f4b7ef",
+			},
+			ExpectedError: nil,
+		},
+		Spec{
 			Title:          "Fails to parse non-RSyslog log line",
 			Input:          `not rsyslog`,
 			ExpectedOutput: map[string]interface{}{},

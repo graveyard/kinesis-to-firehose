@@ -110,10 +110,7 @@ func ParseAndEnhance(line string, env string) (map[string]interface{}, error) {
 	// Try pulling Kayvee fields out of message
 	kvFields, err := FieldsFromKayvee(rawlog)
 	if err != nil {
-		switch err.(type) {
-		case NonKayveeError:
-			// Keep going, not every line is Kayvee...
-		default:
+		if _, ok := err.(*NonKayveeError); !ok {
 			return map[string]interface{}{}, err
 		}
 	} else {
