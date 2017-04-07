@@ -327,3 +327,33 @@ func TestGetContainerMeta(t *testing.T) {
 	}, meta)
 
 }
+
+// Benchmarks
+const benchmarkLine = `2017-04-05T21:57:46.794862+00:00 ip-10-0-0-0 env--app/arn%3Aaws%3Aecs%3Aus-west-1%3A999988887777%3Atask%2Fabcd1234-1a3b-1a3b-1234-d76552f4b7ef[3291]: 2017/04/05 21:57:46 some_file.go:10: {"title":"request_finished"}`
+
+func BenchmarkFieldsFromKayvee(b *testing.B) {
+	for n := 0; n < b.N; n++ {
+		_, err := FieldsFromKayvee(benchmarkLine)
+		if err != nil {
+			b.FailNow()
+		}
+	}
+}
+
+func BenchmarkFieldsFromSyslog(b *testing.B) {
+	for n := 0; n < b.N; n++ {
+		_, err := FieldsFromSyslog(benchmarkLine)
+		if err != nil {
+			b.FailNow()
+		}
+	}
+}
+
+func BenchmarkParseAndEnhance(b *testing.B) {
+	for n := 0; n < b.N; n++ {
+		_, err := ParseAndEnhance(benchmarkLine, "env")
+		if err != nil {
+			b.FailNow()
+		}
+	}
+}
