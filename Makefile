@@ -4,7 +4,10 @@ include golang.mk
 SHELL := /bin/bash
 JAR_DIR := jars
 PKG := github.com/Clever/kinesis-to-firehose
+PKGS := $(shell go list ./... | grep -v /vendor )
 .PHONY: download_jars run build
+
+$(eval $(call golang-version-check,1.7))
 
 URL_PREFIX := http://search.maven.org/remotecontent?filepath=
 
@@ -39,6 +42,8 @@ $(JARS_TO_DOWNLOAD):
 
 download_jars: $(JARS_TO_DOWNLOAD)
 
+all: test build
+
 build:
 	CGO_ENABLED=0 go build -installsuffix cgo -o build/consumer $(PKG)/cmd/consumer
 
@@ -71,5 +76,6 @@ run:
 	docker build -t kinesis-to-firehose .
 	@docker run -v /tmp:/tmp --env-file=<(echo -e $(_ARKLOC_ENV_FILE)) kinesis-to-firehose
 
-test:
-	echo "no tests :("
+test: $(PKGS)
+$(PKGS): golang-test-all-strict-deps
+	$(call golang-test-all-strict,$@)
