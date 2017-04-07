@@ -7,8 +7,6 @@ PKG := github.com/Clever/kinesis-to-firehose
 PKGS := $(shell go list ./... | grep -v /vendor )
 .PHONY: download_jars run build
 
-$(eval $(call golang-version-check,1.7))
-
 URL_PREFIX := http://search.maven.org/remotecontent?filepath=
 
 # this list lifted from https://github.com/awslabs/amazon-kinesis-client-python/blob/fb49c6390c0593fbcf81d6c34c5245726c15b2f3/setup.py#L60
