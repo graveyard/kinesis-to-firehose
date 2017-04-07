@@ -191,6 +191,5 @@ func getContainerMeta(programname, forceEnv, forceApp, forceTask string) (map[st
 		"container_env":  env,
 		"container_app":  app,
 		"container_task": task,
-		"logtag":         fmt.Sprintf("%s--%s/%s", env, app, task),
 	}, nil
 }

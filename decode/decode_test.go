@@ -210,7 +210,6 @@ func TestParseAndEnhance(t *testing.T) {
 				"container_env":  "env",
 				"container_app":  "app",
 				"container_task": "abcd1234-1a3b-1a3b-1234-d76552f4b7ef",
-				"logtag":         "env--app/abcd1234-1a3b-1a3b-1234-d76552f4b7ef",
 			},
 			ExpectedError: nil,
 		},
@@ -231,7 +230,6 @@ func TestParseAndEnhance(t *testing.T) {
 				"container_env":  "env",
 				"container_app":  "force-app",
 				"container_task": "abcd1234-1a3b-1a3b-1234-d76552f4b7ef",
-				"logtag":         "env--force-app/abcd1234-1a3b-1a3b-1234-d76552f4b7ef",
 			},
 			ExpectedError: nil,
 		},
@@ -273,7 +271,6 @@ func TestGetContainerMeta(t *testing.T) {
 		"container_env":  "env",
 		"container_app":  "app",
 		"container_task": "abcd1234-1a3b-1a3b-1234-d76552f4b7ef",
-		"logtag":         "env--app/abcd1234-1a3b-1a3b-1234-d76552f4b7ef",
 	}, meta)
 
 	t.Log("Can override just 'env'")
@@ -284,7 +281,6 @@ func TestGetContainerMeta(t *testing.T) {
 		"container_env":  overrideEnv,
 		"container_app":  "app",
 		"container_task": "abcd1234-1a3b-1a3b-1234-d76552f4b7ef",
-		"logtag":         fmt.Sprintf("%s--app/abcd1234-1a3b-1a3b-1234-d76552f4b7ef", overrideEnv),
 	}, meta)
 
 	t.Log("Can override just 'app'")
@@ -295,7 +291,6 @@ func TestGetContainerMeta(t *testing.T) {
 		"container_env":  "env",
 		"container_app":  overrideApp,
 		"container_task": "abcd1234-1a3b-1a3b-1234-d76552f4b7ef",
-		"logtag":         fmt.Sprintf("env--%s/abcd1234-1a3b-1a3b-1234-d76552f4b7ef", overrideApp),
 	}, meta)
 
 	t.Log("Can override just 'task'")
@@ -306,7 +301,6 @@ func TestGetContainerMeta(t *testing.T) {
 		"container_env":  "env",
 		"container_app":  "app",
 		"container_task": overrideTask,
-		"logtag":         fmt.Sprintf("env--app/%s", overrideTask),
 	}, meta)
 
 	t.Log("Can override all fields")
@@ -317,7 +311,6 @@ func TestGetContainerMeta(t *testing.T) {
 		"container_env":  overrideEnv,
 		"container_app":  overrideApp,
 		"container_task": overrideTask,
-		"logtag":         fmt.Sprintf("%s--%s/%s", overrideEnv, overrideApp, overrideTask),
 	}, meta)
 
 }
