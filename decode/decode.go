@@ -60,6 +60,7 @@ func FieldsFromSyslog(line string) (map[string]interface{}, error) {
 	return out, nil
 }
 
+// NonKayveeError occurs when the log line is not Kayvee
 type NonKayveeError struct{}
 
 func (e NonKayveeError) Error() string {
@@ -94,6 +95,7 @@ func FieldsFromKayvee(line string) (map[string]interface{}, error) {
 	return m, nil
 }
 
+// ParseAndEnhance extracts fields from a log line, and does some post-processing to rename/add fields
 func ParseAndEnhance(line string, env string) (map[string]interface{}, error) {
 	out := map[string]interface{}{}
 

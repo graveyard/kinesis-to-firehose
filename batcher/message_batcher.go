@@ -13,14 +13,8 @@ type Sync interface {
 	SendBatch(batch [][]byte, largestSeq *big.Int, largetsSubSeq int)
 }
 
+// Batcher interface
 type Batcher interface {
-	// SetFlushInterval how often accumulated messages should be flushed (default 1 second).
-	SetFlushInterval(dur time.Duration)
-	// SetFlushCount sets number of messages that trigger a flush (default 10).
-	SetFlushCount(count int)
-	// SetFlushSize sets size of batch that triggers a flush (default 1024 * 1024 = 1 mb)
-	SetFlushSize(size int)
-
 	// AddMesage to the batch
 	AddMessage(msg []byte, sequenceNumber string, subSequenceNumber int) error
 	// Flush all messages from the batch
@@ -43,18 +37,21 @@ type batcher struct {
 }
 
 // New creates a new Batcher
-func New(sync Sync) Batcher {
+// - sync - synchronizes batcher with writer
+// - flushInterval - how often accumulated messages should be flushed (default 1 second).
+// - flushCount - number of messages that trigger a flush (default 10).
+// - flushSize - size of batch that triggers a flush (default 1024 * 1024 = 1 mb)
+func New(sync Sync, flushInterval time.Duration, flushCount int, flushSize int) Batcher {
 	msgChan := make(chan []byte, 100)
 	flushChan := make(chan struct{})
 
 	b := &batcher{
-		flushCount:    10,
-		flushInterval: time.Second,
-		flushSize:     1024 * 1024,
-
-		sync:      sync,
-		msgChan:   msgChan,
-		flushChan: flushChan,
+		flushCount:    flushCount,
+		flushInterval: flushInterval,
+		flushSize:     flushSize,
+		sync:          sync,
+		msgChan:       msgChan,
+		flushChan:     flushChan,
 	}
 
 	go b.startBatcher(msgChan, flushChan)

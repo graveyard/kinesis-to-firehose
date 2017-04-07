@@ -19,6 +19,7 @@ import (
 	"golang.org/x/time/rate"
 )
 
+// FirehoseWriter is a KCL consumer that writes records to an AWS firehose
 type FirehoseWriter struct {
 	shardID   string
 	logFile   string
@@ -65,6 +66,7 @@ type FirehoseWriterConfig struct {
 	DeployEnvironment string
 }
 
+// NewFirehoseWriter creates a FirehoseWriter
 func NewFirehoseWriter(config FirehoseWriterConfig, limiter *rate.Limiter) (*FirehoseWriter, error) {
 	if config.FlushCount > 500 || config.FlushCount < 1 {
 		return nil, fmt.Errorf("FlushCount must be between 1 and 500 messages")
@@ -84,14 +86,12 @@ func NewFirehoseWriter(config FirehoseWriterConfig, limiter *rate.Limiter) (*Fir
 		deployEnv:         config.DeployEnvironment,
 	}
 
-	f.messageBatcher = batcher.New(f)
-	f.messageBatcher.SetFlushCount(config.FlushCount)
-	f.messageBatcher.SetFlushInterval(config.FlushInterval)
-	f.messageBatcher.SetFlushSize(config.FlushSize)
+	f.messageBatcher = batcher.New(f, config.FlushInterval, config.FlushCount, config.FlushSize)
 
 	return f, nil
 }
 
+// Initialize is called when the KCL starts a shard consumer (KCL interface)
 func (f *FirehoseWriter) Initialize(shardID string) error {
 	f.shardID = shardID
 	f.lastCheckpoint = time.Now()
@@ -128,6 +128,7 @@ func (f *FirehoseWriter) checkpoint(checkpointer kcl.Checkpointer, sequenceNumbe
 	}
 }
 
+// ProcessRecords is called when the KCL passes records to the KCL consumer (KCL interface)
 func (f *FirehoseWriter) ProcessRecords(records []kcl.Record, checkpointer kcl.Checkpointer) error {
 	for _, record := range records {
 		// Wait until rate limiter permits one more record to be processed
@@ -175,6 +176,7 @@ func (f *FirehoseWriter) processRecord(record kcl.Record) error {
 	return nil
 }
 
+// Shutdown is called when the KCL wants to trigger a shutdown of the shard consumer (KCL interface)
 func (f *FirehoseWriter) Shutdown(checkpointer kcl.Checkpointer, reason string) error {
 	if reason == "TERMINATE" {
 		fmt.Fprintf(os.Stderr, "Was told to terminate, will attempt to checkpoint.\n")
