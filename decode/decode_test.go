@@ -152,11 +152,11 @@ func TestSyslogDecoding(t *testing.T) {
 		},
 		Spec{
 			Title: "Parses Rsyslog_ FileFormat with Kayvee payload",
-			Input: `2017-04-05T21:57:46.794862+00:00 ip-10-0-0-0 env--app/arn%3Aaws%3Aecs%3Aus-west-1%3A58961234%3Atask%2Fabcd1234-1a3b-1a3b-1234-d76552f4b7ef[3291]: 2017/04/05 21:57:46 some_file.go:10: {"title":"request_finished"}`,
+			Input: `2017-04-05T21:57:46.794862+00:00 ip-10-0-0-0 env--app/arn%3Aaws%3Aecs%3Aus-west-1%3A999988887777%3Atask%2Fabcd1234-1a3b-1a3b-1234-d76552f4b7ef[3291]: 2017/04/05 21:57:46 some_file.go:10: {"title":"request_finished"}`,
 			ExpectedOutput: map[string]interface{}{
 				"Timestamp":   logTime3,
 				"Hostname":    "ip-10-0-0-0",
-				"programname": `env--app/arn%3Aaws%3Aecs%3Aus-west-1%3A58961234%3Atask%2Fabcd1234-1a3b-1a3b-1234-d76552f4b7ef`,
+				"programname": `env--app/arn%3Aaws%3Aecs%3Aus-west-1%3A999988887777%3Atask%2Fabcd1234-1a3b-1a3b-1234-d76552f4b7ef`,
 				"Payload":     `2017/04/05 21:57:46 some_file.go:10: {"title":"request_finished"}`,
 			},
 			ExpectedError: nil,
@@ -195,11 +195,11 @@ func TestParseAndEnhance(t *testing.T) {
 	specs := []Spec{
 		Spec{
 			Title: "Parses a Kayvee log line from an ECS app",
-			Input: `2017-04-05T21:57:46.794862+00:00 ip-10-0-0-0 env--app/arn%3Aaws%3Aecs%3Aus-west-1%3A58961234%3Atask%2Fabcd1234-1a3b-1a3b-1234-d76552f4b7ef[3291]: 2017/04/05 21:57:46 some_file.go:10: {"title":"request_finished"}`,
+			Input: `2017-04-05T21:57:46.794862+00:00 ip-10-0-0-0 env--app/arn%3Aaws%3Aecs%3Aus-west-1%3A999988887777%3Atask%2Fabcd1234-1a3b-1a3b-1234-d76552f4b7ef[3291]: 2017/04/05 21:57:46 some_file.go:10: {"title":"request_finished"}`,
 			ExpectedOutput: map[string]interface{}{
 				"Timestamp":      logTime3,
 				"Hostname":       "ip-10-0-0-0",
-				"programname":    `env--app/arn%3Aaws%3Aecs%3Aus-west-1%3A58961234%3Atask%2Fabcd1234-1a3b-1a3b-1234-d76552f4b7ef`,
+				"programname":    `env--app/arn%3Aaws%3Aecs%3Aus-west-1%3A999988887777%3Atask%2Fabcd1234-1a3b-1a3b-1234-d76552f4b7ef`,
 				"Payload":        `2017/04/05 21:57:46 some_file.go:10: {"title":"request_finished"}`,
 				"title":          "request_finished",
 				"Type":           "Kayvee",
@@ -216,11 +216,11 @@ func TestParseAndEnhance(t *testing.T) {
 		},
 		Spec{
 			Title: "Parses a Kayvee log line from an ECS app, with override to container_app",
-			Input: `2017-04-05T21:57:46.794862+00:00 ip-10-0-0-0 env--app/arn%3Aaws%3Aecs%3Aus-west-1%3A58961234%3Atask%2Fabcd1234-1a3b-1a3b-1234-d76552f4b7ef[3291]: 2017/04/05 21:57:46 some_file.go:10: {"title":"request_finished","container_app":"force-app"}`,
+			Input: `2017-04-05T21:57:46.794862+00:00 ip-10-0-0-0 env--app/arn%3Aaws%3Aecs%3Aus-west-1%3A999988887777%3Atask%2Fabcd1234-1a3b-1a3b-1234-d76552f4b7ef[3291]: 2017/04/05 21:57:46 some_file.go:10: {"title":"request_finished","container_app":"force-app"}`,
 			ExpectedOutput: map[string]interface{}{
 				"Timestamp":      logTime3,
 				"Hostname":       "ip-10-0-0-0",
-				"programname":    `env--app/arn%3Aaws%3Aecs%3Aus-west-1%3A58961234%3Atask%2Fabcd1234-1a3b-1a3b-1234-d76552f4b7ef`,
+				"programname":    `env--app/arn%3Aaws%3Aecs%3Aus-west-1%3A999988887777%3Atask%2Fabcd1234-1a3b-1a3b-1234-d76552f4b7ef`,
 				"Payload":        `2017/04/05 21:57:46 some_file.go:10: {"title":"request_finished","container_app":"force-app"}`,
 				"title":          "request_finished",
 				"Type":           "Kayvee",
@@ -266,7 +266,7 @@ func TestGetContainerMeta(t *testing.T) {
 	assert.Error(err)
 
 	t.Log("Can parse a programname")
-	programname = `env--app/arn%3Aaws%3Aecs%3Aus-west-1%3A58961234%3Atask%2Fabcd1234-1a3b-1a3b-1234-d76552f4b7ef`
+	programname = `env--app/arn%3Aaws%3Aecs%3Aus-west-1%3A999988887777%3Atask%2Fabcd1234-1a3b-1a3b-1234-d76552f4b7ef`
 	meta, err := getContainerMeta(programname, "", "", "")
 	assert.NoError(err)
 	assert.Equal(map[string]string{
@@ -310,7 +310,7 @@ func TestGetContainerMeta(t *testing.T) {
 	}, meta)
 
 	t.Log("Can override all fields")
-	programname = `env--app/arn%3Aaws%3Aecs%3Aus-west-1%3A58961234%3Atask%2Fabcd1234-1a3b-1a3b-1234-d76552f4b7ef`
+	programname = `env--app/arn%3Aaws%3Aecs%3Aus-west-1%3A999988887777%3Atask%2Fabcd1234-1a3b-1a3b-1234-d76552f4b7ef`
 	meta, err = getContainerMeta(programname, overrideEnv, overrideApp, overrideTask)
 	assert.NoError(err)
 	assert.Equal(map[string]string{
