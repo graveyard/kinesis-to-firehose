@@ -23,7 +23,7 @@ processingLanguage = golang
 
 # Valid options at TRIM_HORIZON or LATEST.
 # See http://docs.aws.amazon.com/kinesis/latest/APIReference/API_GetShardIterator.html#API_GetShardIterator_RequestSyntax
-initialPositionInStream = TRIM_HORIZON
+initialPositionInStream = <INITIAL_POSITION>
 
 # The following properties are also available for configuring the KCL Worker that is created
 # by the MultiLangDaemon.
