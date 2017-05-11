@@ -4,6 +4,7 @@ env:
 - KINESIS_AWS_REGION
 - KINESIS_STREAM_NAME
 - KINESIS_APPLICATION_NAME
+- KINESIS_INITIAL_POSITION
 - FIREHOSE_AWS_REGION
 - FIREHOSE_STREAM_NAME
 - LOG_FILE
@@ -13,6 +14,6 @@ resources:
   cpu: .5
   max_mem: 1.8
 shepherds:
-- "nathan.leiby@clever.com"
+- "rafael.garcia@clever.com"
 expose: []
 team: "eng-infra"

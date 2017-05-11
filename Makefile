@@ -64,6 +64,7 @@ consumer_properties:
 	sed -i 's/<STREAM_NAME>/$(KINESIS_STREAM_NAME)/' consumer.properties
 	sed -i 's/<REGION_NAME>/$(KINESIS_AWS_REGION)/' consumer.properties
 	sed -i 's/<APPLICATION_NAME>/$(KINESIS_APPLICATION_NAME)/' consumer.properties
+	sed -i 's/<INITIAL_POSITION>/$(KINESIS_INITIAL_POSITION)/' consumer.properties
 
 run_kinesis_consumer: consumer_properties
 	command -v java >/dev/null 2>&1 || { echo >&2 "Java not installed. Install java!"; exit 1; }
