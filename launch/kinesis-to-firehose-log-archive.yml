@@ -10,6 +10,7 @@ env:
 - LOG_FILE
 - RATE_LIMIT
 - DEPLOY_ENV
+- STRINGIFY_NESTED
 resources:
   cpu: .5
   max_mem: 1.8

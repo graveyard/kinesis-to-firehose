@@ -21,9 +21,10 @@ import (
 
 // FirehoseWriter is a KCL consumer that writes records to an AWS firehose
 type FirehoseWriter struct {
-	shardID   string
-	logFile   string
-	deployEnv string
+	shardID         string
+	logFile         string
+	deployEnv       string
+	stringifyNested bool
 
 	// KCL checkpointing
 	sleepDuration        time.Duration
@@ -64,6 +65,8 @@ type FirehoseWriterConfig struct {
 	// DeployEnvironment is the name of the runtime environment ("development" or "production")
 	// It is used in the decoder to inject an environment into logs.
 	DeployEnvironment string
+	// StringifyNested will take any nested JSON objects and send them as strings instead of JSON objects.
+	StringifyNested bool
 }
 
 // NewFirehoseWriter creates a FirehoseWriter
@@ -84,6 +87,7 @@ func NewFirehoseWriter(config FirehoseWriterConfig, limiter *rate.Limiter) (*Fir
 		rateLimiter:       limiter,
 		logFile:           config.LogFile,
 		deployEnv:         config.DeployEnvironment,
+		stringifyNested:   config.StringifyNested,
 	}
 
 	f.messageBatcher = batcher.New(f, config.FlushInterval, config.FlushCount, config.FlushSize)
@@ -158,7 +162,7 @@ func (f *FirehoseWriter) processRecord(record kcl.Record) error {
 		return err
 	}
 
-	fields, err := decode.ParseAndEnhance(string(data), f.deployEnv)
+	fields, err := decode.ParseAndEnhance(string(data), f.deployEnv, f.stringifyNested)
 	if err != nil {
 		return err
 	}

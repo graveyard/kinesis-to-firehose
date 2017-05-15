@@ -28,6 +28,11 @@ func main() {
 	defer f.Close()
 	log.SetOutput(f)
 
+	stringifyNested := false
+	if os.Getenv("STRINGIFY_NESTED") == "1" {
+		stringifyNested = true
+	}
+
 	sess := session.Must(session.NewSession(aws.NewConfig().WithRegion(getEnv("FIREHOSE_AWS_REGION")).WithMaxRetries(4)))
 	config := writer.FirehoseWriterConfig{
 		FirehoseClient:    firehose.New(sess),
@@ -37,6 +42,7 @@ func main() {
 		FlushSize:         4 * 1024 * 1024, // 4Mb
 		LogFile:           logFile,
 		DeployEnvironment: getEnv("DEPLOY_ENV"),
+		StringifyNested:   stringifyNested,
 	}
 
 	// rateLimit is expressed in records-per-second
