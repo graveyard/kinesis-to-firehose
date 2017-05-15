@@ -96,7 +96,7 @@ func FieldsFromKayvee(line string) (map[string]interface{}, error) {
 }
 
 // ParseAndEnhance extracts fields from a log line, and does some post-processing to rename/add fields
-func ParseAndEnhance(line string, env string) (map[string]interface{}, error) {
+func ParseAndEnhance(line string, env string, stringifyNested bool) (map[string]interface{}, error) {
 	out := map[string]interface{}{}
 
 	syslogFields, err := FieldsFromSyslog(line)
@@ -144,6 +144,15 @@ func ParseAndEnhance(line string, env string) (map[string]interface{}, error) {
 	if err == nil {
 		for k, v := range meta {
 			out[k] = v
+		}
+	}
+
+	if stringifyNested {
+		for k, v := range out {
+			if obj, ok := v.(map[string]interface{}); ok {
+				bs, _ := json.Marshal(obj)
+				out[k] = string(bs)
+			}
 		}
 	}
 
