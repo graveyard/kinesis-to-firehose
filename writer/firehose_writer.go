@@ -21,10 +21,11 @@ import (
 
 // FirehoseWriter is a KCL consumer that writes records to an AWS firehose
 type FirehoseWriter struct {
-	shardID         string
-	logFile         string
-	deployEnv       string
-	stringifyNested bool
+	shardID                string
+	logFile                string
+	deployEnv              string
+	stringifyNested        bool
+	renameESReservedFields bool
 
 	// KCL checkpointing
 	sleepDuration        time.Duration
@@ -67,6 +68,8 @@ type FirehoseWriterConfig struct {
 	DeployEnvironment string
 	// StringifyNested will take any nested JSON objects and send them as strings instead of JSON objects.
 	StringifyNested bool
+	// RenameESReservedFields will rename any field reserved by ES, e.g. _source, to kv__<field>, e.g. kv__source.
+	RenameESReservedFields bool
 }
 
 // NewFirehoseWriter creates a FirehoseWriter
@@ -79,15 +82,16 @@ func NewFirehoseWriter(config FirehoseWriterConfig, limiter *rate.Limiter) (*Fir
 	}
 
 	f := &FirehoseWriter{
-		streamName:        config.StreamName,
-		firehoseClient:    config.FirehoseClient,
-		sleepDuration:     5 * time.Second,
-		checkpointRetries: 5,
-		checkpointFreq:    60 * time.Second,
-		rateLimiter:       limiter,
-		logFile:           config.LogFile,
-		deployEnv:         config.DeployEnvironment,
-		stringifyNested:   config.StringifyNested,
+		streamName:             config.StreamName,
+		firehoseClient:         config.FirehoseClient,
+		sleepDuration:          5 * time.Second,
+		checkpointRetries:      5,
+		checkpointFreq:         60 * time.Second,
+		rateLimiter:            limiter,
+		logFile:                config.LogFile,
+		deployEnv:              config.DeployEnvironment,
+		stringifyNested:        config.StringifyNested,
+		renameESReservedFields: config.RenameESReservedFields,
 	}
 
 	f.messageBatcher = batcher.New(f, config.FlushInterval, config.FlushCount, config.FlushSize)
@@ -162,7 +166,7 @@ func (f *FirehoseWriter) processRecord(record kcl.Record) error {
 		return err
 	}
 
-	fields, err := decode.ParseAndEnhance(string(data), f.deployEnv, f.stringifyNested)
+	fields, err := decode.ParseAndEnhance(string(data), f.deployEnv, f.stringifyNested, f.renameESReservedFields)
 	if err != nil {
 		return err
 	}
