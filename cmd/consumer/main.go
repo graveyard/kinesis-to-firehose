@@ -33,16 +33,22 @@ func main() {
 		stringifyNested = true
 	}
 
+	renameESReservedFields := false
+	if os.Getenv("RENAME_ES_RESERVED_FIELDS") == "1" {
+		renameESReservedFields = true
+	}
+
 	sess := session.Must(session.NewSession(aws.NewConfig().WithRegion(getEnv("FIREHOSE_AWS_REGION")).WithMaxRetries(4)))
 	config := writer.FirehoseWriterConfig{
-		FirehoseClient:    firehose.New(sess),
-		StreamName:        getEnv("FIREHOSE_STREAM_NAME"),
-		FlushInterval:     10 * time.Second,
-		FlushCount:        500,
-		FlushSize:         4 * 1024 * 1024, // 4Mb
-		LogFile:           logFile,
-		DeployEnvironment: getEnv("DEPLOY_ENV"),
-		StringifyNested:   stringifyNested,
+		FirehoseClient:         firehose.New(sess),
+		StreamName:             getEnv("FIREHOSE_STREAM_NAME"),
+		FlushInterval:          10 * time.Second,
+		FlushCount:             500,
+		FlushSize:              4 * 1024 * 1024, // 4Mb
+		LogFile:                logFile,
+		DeployEnvironment:      getEnv("DEPLOY_ENV"),
+		StringifyNested:        stringifyNested,
+		RenameESReservedFields: renameESReservedFields,
 	}
 
 	// rateLimit is expressed in records-per-second

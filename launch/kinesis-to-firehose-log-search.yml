@@ -11,6 +11,7 @@ env:
 - RATE_LIMIT
 - DEPLOY_ENV
 - STRINGIFY_NESTED
+- RENAME_ES_RESERVED_FIELDS
 resources:
   cpu: .5
   max_mem: 1.8

@@ -184,8 +184,9 @@ func TestSyslogDecoding(t *testing.T) {
 }
 
 type ParseAndEnhanceInput struct {
-	Line            string
-	StringifyNested bool
+	Line                   string
+	StringifyNested        bool
+	RenameESReservedFields bool
 }
 
 type ParseAndEnhanceSpec struct {
@@ -285,7 +286,7 @@ func TestParseAndEnhance(t *testing.T) {
 			ExpectedError: nil,
 		},
 		ParseAndEnhanceSpec{
-			Title: "Has the option to turn JSON values into strings",
+			Title: "Has the option to stringify object values",
 			Input: ParseAndEnhanceInput{
 				Line:            `2017-04-05T21:57:46.794862+00:00 ip-10-0-0-0 env--app/arn%3Aaws%3Aecs%3Aus-west-1%3A999988887777%3Atask%2Fabcd1234-1a3b-1a3b-1234-d76552f4b7ef[3291]: 2017/04/05 21:57:46 some_file.go:10: {"title":"request_finished", "nested": {"a":"b"}}`,
 				StringifyNested: true,
@@ -307,11 +308,57 @@ func TestParseAndEnhance(t *testing.T) {
 			},
 			ExpectedError: nil,
 		},
+		ParseAndEnhanceSpec{
+			Title: "Has the option to stringify array values",
+			Input: ParseAndEnhanceInput{
+				Line:            `2017-04-05T21:57:46.794862+00:00 ip-10-0-0-0 env--app/arn%3Aaws%3Aecs%3Aus-west-1%3A999988887777%3Atask%2Fabcd1234-1a3b-1a3b-1234-d76552f4b7ef[3291]: 2017/04/05 21:57:46 some_file.go:10: {"title":"request_finished", "nested": [{"a":"b"}]}`,
+				StringifyNested: true,
+			},
+			ExpectedOutput: map[string]interface{}{
+				"timestamp":      logTime3,
+				"hostname":       "ip-10-0-0-0",
+				"programname":    `env--app/arn%3Aaws%3Aecs%3Aus-west-1%3A999988887777%3Atask%2Fabcd1234-1a3b-1a3b-1234-d76552f4b7ef`,
+				"rawlog":         `2017/04/05 21:57:46 some_file.go:10: {"title":"request_finished", "nested": [{"a":"b"}]}`,
+				"title":          "request_finished",
+				"type":           "Kayvee",
+				"prefix":         "2017/04/05 21:57:46 some_file.go:10: ",
+				"postfix":        "",
+				"env":            "deploy-env",
+				"container_env":  "env",
+				"container_app":  "app",
+				"container_task": "abcd1234-1a3b-1a3b-1234-d76552f4b7ef",
+				"nested":         `[{"a":"b"}]`,
+			},
+			ExpectedError: nil,
+		},
+		ParseAndEnhanceSpec{
+			Title: "Has the option to rename reserved ES fields",
+			Input: ParseAndEnhanceInput{
+				Line: `2017-04-05T21:57:46.794862+00:00 ip-10-0-0-0 env--app/arn%3Aaws%3Aecs%3Aus-west-1%3A999988887777%3Atask%2Fabcd1234-1a3b-1a3b-1234-d76552f4b7ef[3291]: 2017/04/05 21:57:46 some_file.go:10: {"title":"request_finished", "_source": "a"}`,
+				RenameESReservedFields: true,
+			},
+			ExpectedOutput: map[string]interface{}{
+				"timestamp":      logTime3,
+				"hostname":       "ip-10-0-0-0",
+				"programname":    `env--app/arn%3Aaws%3Aecs%3Aus-west-1%3A999988887777%3Atask%2Fabcd1234-1a3b-1a3b-1234-d76552f4b7ef`,
+				"rawlog":         `2017/04/05 21:57:46 some_file.go:10: {"title":"request_finished", "_source": "a"}`,
+				"title":          "request_finished",
+				"type":           "Kayvee",
+				"prefix":         "2017/04/05 21:57:46 some_file.go:10: ",
+				"postfix":        "",
+				"env":            "deploy-env",
+				"container_env":  "env",
+				"container_app":  "app",
+				"container_task": "abcd1234-1a3b-1a3b-1234-d76552f4b7ef",
+				"kv__source":     "a",
+			},
+			ExpectedError: nil,
+		},
 	}
 	for _, spec := range specs {
 		t.Run(fmt.Sprintf(spec.Title), func(t *testing.T) {
 			assert := assert.New(t)
-			fields, err := ParseAndEnhance(spec.Input.Line, "deploy-env", spec.Input.StringifyNested)
+			fields, err := ParseAndEnhance(spec.Input.Line, "deploy-env", spec.Input.StringifyNested, spec.Input.RenameESReservedFields)
 			if spec.ExpectedError != nil {
 				assert.Error(err)
 				assert.IsType(spec.ExpectedError, err)
@@ -406,7 +453,7 @@ func BenchmarkFieldsFromSyslog(b *testing.B) {
 
 func BenchmarkParseAndEnhance(b *testing.B) {
 	for n := 0; n < b.N; n++ {
-		_, err := ParseAndEnhance(benchmarkLine, "env", false)
+		_, err := ParseAndEnhance(benchmarkLine, "env", false, false)
 		if err != nil {
 			b.FailNow()
 		}
