@@ -13,3 +13,6 @@ import:
 - package: golang.org/x/net
   subpackages:
   - context
+- package: github.com/Clever/amazon-kinesis-client-go
+  subpackages:
+  - kcl

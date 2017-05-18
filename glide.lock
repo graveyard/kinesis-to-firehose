@@ -1,5 +1,5 @@
-hash: 07b6c2cdce8648bf2e12a2d0428778ff9d6479efbc1efbf684abd7a5e57879b2
-updated: 2017-04-07T12:54:03.919722564-07:00
+hash: d7b0a549c753cc15502fe26998850202eda04364248782ddfa6ac10d8ffe6349
+updated: 2017-05-18T00:53:33.600476459Z
 imports:
 - name: github.com/aws/aws-sdk-go
   version: 819b71cf8430e434c1eee7e7e8b0f2b8870be899
@@ -31,7 +31,7 @@ imports:
   - service/firehose/firehoseiface
   - service/sts
 - name: github.com/Clever/amazon-kinesis-client-go
-  version: 695f85d99d1eb40be6f60f4a2769956e39dbb53e
+  version: 8da04c944f2059941358d76c124dd2dda88902b7
   subpackages:
   - kcl
 - name: github.com/Clever/heka-clever-plugins
