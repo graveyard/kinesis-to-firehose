@@ -106,7 +106,7 @@ func (f *FirehoseWriter) Initialize(shardID string) error {
 	return nil
 }
 
-func (f *FirehoseWriter) checkpoint(checkpointer kcl.Checkpointer, sequenceNumber string, subSequenceNumber int) {
+func (f *FirehoseWriter) checkpoint(checkpointer kcl.Checkpointer, sequenceNumber *string, subSequenceNumber *int) {
 	for n := -1; n < f.checkpointRetries; n++ {
 		err := checkpointer.Checkpoint(sequenceNumber, subSequenceNumber)
 		if err == nil {
@@ -151,7 +151,8 @@ func (f *FirehoseWriter) ProcessRecords(records []kcl.Record, checkpointer kcl.C
 
 	// Checkpoint Kinesis stream
 	if time.Now().Sub(f.lastCheckpoint) > f.checkpointFreq {
-		f.checkpoint(checkpointer, f.largestSeqFlushed.String(), f.largestSubSeqFlushed)
+		largestSeq := f.largestSeqFlushed.String()
+		f.checkpoint(checkpointer, &largestSeq, &f.largestSubSeqFlushed)
 		f.lastCheckpoint = time.Now()
 		log.Printf(fmt.Sprintf("%s -- Received:%d Sent:%d Failed:%d\n", f.shardID, f.recvRecordCount, f.sentRecordCount, f.failedRecordCount))
 	}
@@ -192,7 +193,7 @@ func (f *FirehoseWriter) Shutdown(checkpointer kcl.Checkpointer, reason string) 
 	if reason == "TERMINATE" {
 		fmt.Fprintf(os.Stderr, "Was told to terminate, will attempt to checkpoint.\n")
 		f.messageBatcher.Flush()
-		f.checkpoint(checkpointer, "", 0)
+		f.checkpoint(checkpointer, nil, nil)
 	} else {
 		fmt.Fprintf(os.Stderr, "Shutting down due to failover. Reason: %s. Will not checkpoint.\n", reason)
 	}
