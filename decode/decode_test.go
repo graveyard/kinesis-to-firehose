@@ -187,6 +187,7 @@ type ParseAndEnhanceInput struct {
 	Line                   string
 	StringifyNested        bool
 	RenameESReservedFields bool
+	MinimumTimestamp       time.Time
 }
 
 type ParseAndEnhanceSpec struct {
@@ -354,11 +355,69 @@ func TestParseAndEnhance(t *testing.T) {
 			},
 			ExpectedError: nil,
 		},
+		ParseAndEnhanceSpec{
+			Title: "Errors if logTime < MinimumTimestamp",
+			Input: ParseAndEnhanceInput{
+				Line: `2017-04-05T21:57:46.794862+00:00 ip-10-0-0-0 env--app/arn%3Aaws%3Aecs%3Aus-west-1%3A999988887777%3Atask%2Fabcd1234-1a3b-1a3b-1234-d76552f4b7ef[3291]: 2017/04/05 21:57:46 some_file.go:10: {"title":"request_finished", "_source": "a"}`,
+				RenameESReservedFields: true,
+				MinimumTimestamp:       time.Now().Add(100 * time.Hour * 24 * 365), // good thru year 2117
+			},
+			ExpectedOutput: map[string]interface{}{},
+			ExpectedError:  fmt.Errorf(""),
+		},
+		ParseAndEnhanceSpec{
+			Title: "Accepts logs if logTime > MinimumTimestamp",
+			Input: ParseAndEnhanceInput{
+				Line: `2017-04-05T21:57:46.794862+00:00 ip-10-0-0-0 env--app/arn%3Aaws%3Aecs%3Aus-west-1%3A999988887777%3Atask%2Fabcd1234-1a3b-1a3b-1234-d76552f4b7ef[3291]: 2017/04/05 21:57:46 some_file.go:10: {"title":"request_finished", "_source": "a"}`,
+				RenameESReservedFields: true,
+				MinimumTimestamp:       time.Now().Add(-100 * time.Hour * 24 * 365), // good thru year 2117
+			},
+			ExpectedOutput: map[string]interface{}{
+				"timestamp":      logTime3,
+				"hostname":       "ip-10-0-0-0",
+				"programname":    `env--app/arn%3Aaws%3Aecs%3Aus-west-1%3A999988887777%3Atask%2Fabcd1234-1a3b-1a3b-1234-d76552f4b7ef`,
+				"rawlog":         `2017/04/05 21:57:46 some_file.go:10: {"title":"request_finished", "_source": "a"}`,
+				"title":          "request_finished",
+				"type":           "Kayvee",
+				"prefix":         "2017/04/05 21:57:46 some_file.go:10: ",
+				"postfix":        "",
+				"env":            "deploy-env",
+				"container_env":  "env",
+				"container_app":  "app",
+				"container_task": "abcd1234-1a3b-1a3b-1234-d76552f4b7ef",
+				"kv__source":     "a",
+			},
+			ExpectedError: nil,
+		},
+		ParseAndEnhanceSpec{
+			Title: "Accepts logs if logTime > MinimumTimestamp",
+			Input: ParseAndEnhanceInput{
+				Line: `2017-04-05T21:57:46.794862+00:00 ip-10-0-0-0 env--app/arn%3Aaws%3Aecs%3Aus-west-1%3A999988887777%3Atask%2Fabcd1234-1a3b-1a3b-1234-d76552f4b7ef[3291]: 2017/04/05 21:57:46 some_file.go:10: {"title":"request_finished", "_source": "a"}`,
+				RenameESReservedFields: true,
+				MinimumTimestamp:       time.Now().Add(-100 * time.Hour * 24 * 365), // good thru year 2117
+			},
+			ExpectedOutput: map[string]interface{}{
+				"timestamp":      logTime3,
+				"hostname":       "ip-10-0-0-0",
+				"programname":    `env--app/arn%3Aaws%3Aecs%3Aus-west-1%3A999988887777%3Atask%2Fabcd1234-1a3b-1a3b-1234-d76552f4b7ef`,
+				"rawlog":         `2017/04/05 21:57:46 some_file.go:10: {"title":"request_finished", "_source": "a"}`,
+				"title":          "request_finished",
+				"type":           "Kayvee",
+				"prefix":         "2017/04/05 21:57:46 some_file.go:10: ",
+				"postfix":        "",
+				"env":            "deploy-env",
+				"container_env":  "env",
+				"container_app":  "app",
+				"container_task": "abcd1234-1a3b-1a3b-1234-d76552f4b7ef",
+				"kv__source":     "a",
+			},
+			ExpectedError: nil,
+		},
 	}
 	for _, spec := range specs {
 		t.Run(fmt.Sprintf(spec.Title), func(t *testing.T) {
 			assert := assert.New(t)
-			fields, err := ParseAndEnhance(spec.Input.Line, "deploy-env", spec.Input.StringifyNested, spec.Input.RenameESReservedFields)
+			fields, err := ParseAndEnhance(spec.Input.Line, "deploy-env", spec.Input.StringifyNested, spec.Input.RenameESReservedFields, spec.Input.MinimumTimestamp)
 			if spec.ExpectedError != nil {
 				assert.Error(err)
 				assert.IsType(spec.ExpectedError, err)
@@ -427,7 +486,6 @@ func TestGetContainerMeta(t *testing.T) {
 		"container_app":  overrideApp,
 		"container_task": overrideTask,
 	}, meta)
-
 }
 
 // Benchmarks
@@ -453,7 +511,7 @@ func BenchmarkFieldsFromSyslog(b *testing.B) {
 
 func BenchmarkParseAndEnhance(b *testing.B) {
 	for n := 0; n < b.N; n++ {
-		_, err := ParseAndEnhance(benchmarkLine, "env", false, false)
+		_, err := ParseAndEnhance(benchmarkLine, "env", false, false, time.Time{})
 		if err != nil {
 			b.FailNow()
 		}

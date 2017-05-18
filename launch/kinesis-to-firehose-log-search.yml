@@ -12,6 +12,7 @@ env:
 - DEPLOY_ENV
 - STRINGIFY_NESTED
 - RENAME_ES_RESERVED_FIELDS
+- MINIMUM_TIMESTAMP
 resources:
   cpu: .5
   max_mem: 1.8

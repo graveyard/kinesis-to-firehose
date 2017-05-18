@@ -39,6 +39,7 @@ func main() {
 	}
 
 	sess := session.Must(session.NewSession(aws.NewConfig().WithRegion(getEnv("FIREHOSE_AWS_REGION")).WithMaxRetries(4)))
+	minimumTimestamp, err := strconv.Atoi(getEnv("MINIMUM_TIMESTAMP"))
 	config := writer.FirehoseWriterConfig{
 		FirehoseClient:         firehose.New(sess),
 		StreamName:             getEnv("FIREHOSE_STREAM_NAME"),
@@ -49,6 +50,7 @@ func main() {
 		DeployEnvironment:      getEnv("DEPLOY_ENV"),
 		StringifyNested:        stringifyNested,
 		RenameESReservedFields: renameESReservedFields,
+		MinimumTimestamp:       time.Unix(int64(minimumTimestamp), 0),
 	}
 
 	// rateLimit is expressed in records-per-second
