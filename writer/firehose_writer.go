@@ -26,6 +26,7 @@ type FirehoseWriter struct {
 	deployEnv              string
 	stringifyNested        bool
 	renameESReservedFields bool
+	minimumTimestamp       time.Time
 
 	// KCL checkpointing
 	sleepDuration        time.Duration
@@ -70,6 +71,8 @@ type FirehoseWriterConfig struct {
 	StringifyNested bool
 	// RenameESReservedFields will rename any field reserved by ES, e.g. _source, to kv__<field>, e.g. kv__source.
 	RenameESReservedFields bool
+	// MinimumTimestamp will reject any logs with a timestamp < MinimumTimestamp
+	MinimumTimestamp time.Time
 }
 
 // NewFirehoseWriter creates a FirehoseWriter
@@ -92,6 +95,7 @@ func NewFirehoseWriter(config FirehoseWriterConfig, limiter *rate.Limiter) (*Fir
 		deployEnv:              config.DeployEnvironment,
 		stringifyNested:        config.StringifyNested,
 		renameESReservedFields: config.RenameESReservedFields,
+		minimumTimestamp:       config.MinimumTimestamp,
 	}
 
 	f.messageBatcher = batcher.New(f, config.FlushInterval, config.FlushCount, config.FlushSize)
@@ -167,7 +171,7 @@ func (f *FirehoseWriter) processRecord(record kcl.Record) error {
 		return err
 	}
 
-	fields, err := decode.ParseAndEnhance(string(data), f.deployEnv, f.stringifyNested, f.renameESReservedFields)
+	fields, err := decode.ParseAndEnhance(string(data), f.deployEnv, f.stringifyNested, f.renameESReservedFields, f.minimumTimestamp)
 	if err != nil {
 		return err
 	}

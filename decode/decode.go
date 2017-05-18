@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/Clever/syslogparser/rfc3164"
 )
@@ -96,7 +97,7 @@ func FieldsFromKayvee(line string) (map[string]interface{}, error) {
 }
 
 // ParseAndEnhance extracts fields from a log line, and does some post-processing to rename/add fields
-func ParseAndEnhance(line string, env string, stringifyNested bool, renameESReservedFields bool) (map[string]interface{}, error) {
+func ParseAndEnhance(line string, env string, stringifyNested bool, renameESReservedFields bool, minimumTimestamp time.Time) (map[string]interface{}, error) {
 	out := map[string]interface{}{}
 
 	syslogFields, err := FieldsFromSyslog(line)
@@ -170,6 +171,11 @@ func ParseAndEnhance(line string, env string, stringifyNested bool, renameESRese
 				delete(out, oldKey)
 			}
 		}
+	}
+
+	msgTime, ok := out["timestamp"].(time.Time)
+	if ok && !msgTime.After(minimumTimestamp) {
+		return map[string]interface{}{}, fmt.Errorf("message's timestamp < minimumTimestamp")
 	}
 
 	return out, nil
