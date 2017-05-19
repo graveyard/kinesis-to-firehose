@@ -10,7 +10,7 @@ import (
 // The writer declares how to write messages (via its `SendBatch` method), while the batcher
 // keeps track of messages written
 type Sync interface {
-	SendBatch(batch [][]byte, largestSeq *big.Int, largetsSubSeq int)
+	SendBatch(batch [][]byte, largestSeq *big.Int, largestSubSeq int)
 }
 
 // Batcher interface
