@@ -40,6 +40,9 @@ func main() {
 
 	sess := session.Must(session.NewSession(aws.NewConfig().WithRegion(getEnv("FIREHOSE_AWS_REGION")).WithMaxRetries(4)))
 	minimumTimestamp, err := strconv.Atoi(getEnv("MINIMUM_TIMESTAMP"))
+	if err != nil {
+		stdErrLogger.Fatalf("Invalid MINIMUM_TIMESTAMP: %s", err.Error())
+	}
 	config := writer.FirehoseWriterConfig{
 		FirehoseClient:         firehose.New(sess),
 		StreamName:             getEnv("FIREHOSE_STREAM_NAME"),
