@@ -488,6 +488,336 @@ func TestGetContainerMeta(t *testing.T) {
 	}, meta)
 }
 
+func TestExtractKVMeta(t *testing.T) {
+	assert := assert.New(t)
+
+	tests := []struct {
+		Description                string
+		Log                        map[string]interface{}
+		Team                       string
+		Language                   string
+		Version                    string
+		ExpectedMetricsRoutes      []MetricsRoute
+		ExpectedAnalyticsRoutes    []AnalyticsRoute
+		ExpectedNotificationRoutes []NotificationRoute
+		ExpectedAlertRoutes        []AlertRoute
+	}{
+		{
+			Description: "log line with no routes",
+			Log:         map[string]interface{}{"hi": "hello!"},
+		},
+		{
+			Description: "empty _kvmeta",
+			Log: map[string]interface{}{
+				"hi":      "hello!",
+				"_kvmeta": map[string]interface{}{},
+			},
+		},
+		{
+			Description: "_kvmeta with no routes",
+			Team:        "green",
+			Version:     "three",
+			Language:    "tree",
+			Log: map[string]interface{}{
+				"hi": "hello!",
+				"_kvmeta": map[string]interface{}{
+					"team":        "green",
+					"kv_version":  "three",
+					"kv_language": "tree",
+				},
+			},
+		},
+		{
+			Description: "_kvmeta with no routes",
+			Team:        "green",
+			Version:     "three",
+			Language:    "tree",
+			Log: map[string]interface{}{
+				"hi": "hello!",
+				"_kvmeta": map[string]interface{}{
+					"team":        "green",
+					"kv_version":  "three",
+					"kv_language": "tree",
+				},
+			},
+		},
+		{
+			Description: "_kvmeta with metric routes",
+			Team:        "green",
+			Version:     "three",
+			Language:    "tree",
+			ExpectedMetricsRoutes: []MetricsRoute{
+				{
+					Series:     "1,1,2,3,5,8,13",
+					Dimensions: []string{"app", "district"},
+					ValueField: "value",
+					RuleName:   "cool",
+				},
+				{
+					Series:     "1,1,2,6,24,120,720,5040",
+					Dimensions: []string{"app", "district"},
+					ValueField: "value",
+					RuleName:   "cool2",
+				},
+			},
+			Log: map[string]interface{}{
+				"hi": "hello!",
+				"_kvmeta": map[string]interface{}{
+					"team":        "green",
+					"kv_version":  "three",
+					"kv_language": "tree",
+					"routes": []map[string]interface{}{
+						map[string]interface{}{
+							"type":        "metrics",
+							"rule":        "cool",
+							"series":      "1,1,2,3,5,8,13",
+							"value_field": "value",
+							"dimensions":  []string{"app", "district"},
+						},
+						map[string]interface{}{
+							"type":       "metrics",
+							"rule":       "cool2",
+							"series":     "1,1,2,6,24,120,720,5040",
+							"dimensions": []string{"app", "district"},
+						},
+					},
+				},
+			},
+		},
+		{
+			Description: "_kvmeta with analytic routes",
+			Team:        "green",
+			Version:     "christmas",
+			Language:    "tree",
+			ExpectedAnalyticsRoutes: []AnalyticsRoute{
+				{
+					Series:   "what-is-this",
+					RuleName: "what's-this?",
+				},
+				{
+					RuleName: "there's-app-invites-everywhere",
+					Series:   "there's-bts-in-the-air",
+				},
+			},
+			Log: map[string]interface{}{
+				"hi": "hello!",
+				"_kvmeta": map[string]interface{}{
+					"team":        "green",
+					"kv_version":  "christmas",
+					"kv_language": "tree",
+					"routes": []map[string]interface{}{
+						map[string]interface{}{
+							"type":   "analytics",
+							"rule":   "what's-this?",
+							"series": "what-is-this",
+						},
+						map[string]interface{}{
+							"type":   "analytics",
+							"rule":   "there's-app-invites-everywhere",
+							"series": "there's-bts-in-the-air",
+						},
+					},
+				},
+			},
+		},
+		{
+			Description: "_kvmeta with notification routes",
+			Team:        "slack",
+			Version:     "evergreen",
+			Language:    "markdown-ish",
+			ExpectedNotificationRoutes: []NotificationRoute{
+				{
+					RuleName: "did-you-know",
+					Channel:  "originally-slack",
+					Message:  "was a gaming company",
+					Icon:     ":video_game:",
+					User:     "og slack bronie",
+				},
+				{
+					RuleName: "what's-the-catch",
+					Channel:  "slack-is-built-with-php",
+					Message:  "just like farmville",
+					Icon:     ":ghost:",
+					User:     "logging-pipeline",
+				},
+			},
+			Log: map[string]interface{}{
+				"hi": "hello!",
+				"_kvmeta": map[string]interface{}{
+					"team":        "slack",
+					"kv_version":  "evergreen",
+					"kv_language": "markdown-ish",
+					"routes": []map[string]interface{}{
+						map[string]interface{}{
+							"type":    "notifications",
+							"rule":    "did-you-know",
+							"channel": "originally-slack",
+							"message": "was a gaming company",
+							"icon":    ":video_game:",
+							"user":    "og slack bronie",
+						},
+						map[string]interface{}{
+							"type":    "notifications",
+							"rule":    "what's-the-catch",
+							"channel": "slack-is-built-with-php",
+							"message": "just like farmville",
+						},
+					},
+				},
+			},
+		},
+		{
+			Description: "_kvmeta with alert routes",
+			Team:        "a-team",
+			Version:     "old",
+			Language:    "jive",
+			ExpectedAlertRoutes: []AlertRoute{
+				{
+					RuleName:   "last-call",
+					Series:     "doing-it-til-we-fall",
+					Dimensions: []string{"who", "where"},
+					StatType:   "guage",
+					ValueField: "status",
+				},
+				{
+					RuleName:   "watch-out-now",
+					Series:     "dem-gators-gonna-bite-ya",
+					Dimensions: []string{"how-fresh", "how-clean"},
+					StatType:   "counter",
+					ValueField: "value",
+				},
+			},
+			Log: map[string]interface{}{
+				"hi": "hello!",
+				"_kvmeta": map[string]interface{}{
+					"team":        "a-team",
+					"kv_version":  "old",
+					"kv_language": "jive",
+					"routes": []map[string]interface{}{
+						map[string]interface{}{
+							"type":        "alerts",
+							"rule":        "last-call",
+							"series":      "doing-it-til-we-fall",
+							"dimensions":  []string{"who", "where"},
+							"stat_type":   "guage",
+							"value_field": "status",
+						},
+						map[string]interface{}{
+							"type":       "alerts",
+							"rule":       "watch-out-now",
+							"series":     "dem-gators-gonna-bite-ya",
+							"dimensions": []string{"how-fresh", "how-clean"},
+						},
+					},
+				},
+			},
+		},
+		{
+			Description: "_kvmeta with all types of routes",
+			Team:        "diversity",
+			Version:     "kv-routes",
+			Language:    "understanding",
+			ExpectedMetricsRoutes: []MetricsRoute{
+				{
+					RuleName:   "all-combos",
+					Series:     "1,1,2,6,24,120,720,5040",
+					Dimensions: []string{"fact", "orial"},
+					ValueField: "value",
+				},
+			},
+			ExpectedAnalyticsRoutes: []AnalyticsRoute{
+				{
+					RuleName: "there's-app-invites-everywhere",
+					Series:   "there's-bts-in-the-air",
+				},
+			},
+			ExpectedNotificationRoutes: []NotificationRoute{
+				{
+					RuleName: "what's-the-catch",
+					Channel:  "slack-is-built-with-php",
+					Message:  "just like farmville",
+					Icon:     ":ghost:",
+					User:     "logging-pipeline",
+				},
+			},
+			ExpectedAlertRoutes: []AlertRoute{
+				{
+					RuleName:   "last-call",
+					Series:     "doing-it-til-we-fall",
+					Dimensions: []string{"who", "where"},
+					StatType:   "guage",
+					ValueField: "status",
+				},
+			},
+			Log: map[string]interface{}{
+				"hi": "hello!",
+				"_kvmeta": map[string]interface{}{
+					"team":        "diversity",
+					"kv_version":  "kv-routes",
+					"kv_language": "understanding",
+					"routes": []map[string]interface{}{
+						map[string]interface{}{
+							"type":       "metrics",
+							"rule":       "all-combos",
+							"series":     "1,1,2,6,24,120,720,5040",
+							"dimensions": []string{"fact", "orial"},
+						},
+						map[string]interface{}{
+							"type":   "analytics",
+							"rule":   "there's-app-invites-everywhere",
+							"series": "there's-bts-in-the-air",
+						},
+						map[string]interface{}{
+							"type":    "notifications",
+							"rule":    "what's-the-catch",
+							"channel": "slack-is-built-with-php",
+							"message": "just like farmville",
+						},
+						map[string]interface{}{
+							"type":        "alerts",
+							"rule":        "last-call",
+							"series":      "doing-it-til-we-fall",
+							"dimensions":  []string{"who", "where"},
+							"stat_type":   "guage",
+							"value_field": "status",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Log(test.Description)
+		kvmeta := ExtractKVMeta(test.Log)
+
+		assert.Equal(test.Team, kvmeta.Team)
+		assert.Equal(test.Language, kvmeta.Language)
+		assert.Equal(test.Version, kvmeta.Version)
+
+		assert.Equal(len(test.ExpectedMetricsRoutes), len(kvmeta.Routes.MetricsRoutes()))
+		for idx, route := range kvmeta.Routes.MetricsRoutes() {
+			expected := test.ExpectedMetricsRoutes[idx]
+			assert.Exactly(expected, route)
+		}
+		assert.Equal(len(test.ExpectedAnalyticsRoutes), len(kvmeta.Routes.AnalyticsRoutes()))
+		for idx, route := range kvmeta.Routes.AnalyticsRoutes() {
+			expected := test.ExpectedAnalyticsRoutes[idx]
+			assert.Exactly(expected, route)
+		}
+		assert.Equal(len(test.ExpectedNotificationRoutes), len(kvmeta.Routes.NotificationRoutes()))
+		for idx, route := range kvmeta.Routes.NotificationRoutes() {
+			expected := test.ExpectedNotificationRoutes[idx]
+			assert.Exactly(expected, route)
+		}
+		assert.Equal(len(test.ExpectedAlertRoutes), len(kvmeta.Routes.AlertRoutes()))
+		for idx, route := range kvmeta.Routes.AlertRoutes() {
+			expected := test.ExpectedAlertRoutes[idx]
+			assert.Exactly(expected, route)
+		}
+	}
+}
+
 // Benchmarks
 const benchmarkLine = `2017-04-05T21:57:46.794862+00:00 ip-10-0-0-0 env--app/arn%3Aaws%3Aecs%3Aus-west-1%3A999988887777%3Atask%2Fabcd1234-1a3b-1a3b-1234-d76552f4b7ef[3291]: 2017/04/05 21:57:46 some_file.go:10: {"title":"request_finished"}`
 

@@ -96,6 +96,243 @@ func FieldsFromKayvee(line string) (map[string]interface{}, error) {
 	return m, nil
 }
 
+// MetricsRoute represents a metrics kv log route
+type MetricsRoute struct {
+	Series     string
+	Dimensions []string
+	ValueField string
+	RuleName   string
+}
+
+// AnalyticsRoute represents an analytics kv log route
+type AnalyticsRoute struct {
+	Series   string
+	RuleName string
+}
+
+// NotificationRoute represents a notification kv log route
+type NotificationRoute struct {
+	Channel  string
+	Icon     string
+	Message  string
+	User     string
+	RuleName string
+}
+
+// AlertRoute represents an alert kv log route
+type AlertRoute struct {
+	Series     string
+	Dimensions []string
+	StatType   string
+	ValueField string
+	RuleName   string
+}
+
+func getStringValue(json map[string]interface{}, key string) string {
+	val, ok := json[key]
+	if !ok {
+		return ""
+	}
+
+	str, ok := val.(string)
+	if !ok {
+		return ""
+	}
+
+	return str
+}
+
+func getStringArray(json map[string]interface{}, key string) []string {
+	val, ok := json[key]
+	if !ok {
+		return []string{}
+	}
+
+	strArray, ok := val.([]string)
+	if !ok {
+		return []string{}
+	}
+
+	return strArray
+}
+
+// LogRoutes a type alias to make it easier to add route specific filter functions
+type LogRoutes []map[string]interface{}
+
+// MetricsRoutes filters the LogRoutes and returns a list of MetricsRoutes structs
+func (l LogRoutes) MetricsRoutes() []MetricsRoute {
+	routes := []MetricsRoute{}
+
+	for _, route := range l {
+		tipe := getStringValue(route, "type")
+		if tipe != "metrics" {
+			continue
+		}
+
+		series := getStringValue(route, "series")
+		dimensions := getStringArray(route, "dimensions")
+		valueField := getStringValue(route, "value_field")
+		ruleName := getStringValue(route, "rule")
+
+		if series == "" { // TODO: log error
+			continue
+		}
+		if valueField == "" {
+			valueField = "value"
+		}
+
+		routes = append(routes, MetricsRoute{
+			Series:     series,
+			Dimensions: dimensions,
+			ValueField: valueField,
+			RuleName:   ruleName,
+		})
+	}
+
+	return routes
+}
+
+// AnalyticsRoutes filters the LogRoutes and returns a list of AnalyticsRoutes structs
+func (l LogRoutes) AnalyticsRoutes() []AnalyticsRoute {
+	routes := []AnalyticsRoute{}
+
+	for _, route := range l {
+		tipe := getStringValue(route, "type")
+		if tipe != "analytics" {
+			continue
+		}
+
+		series := getStringValue(route, "series")
+		ruleName := getStringValue(route, "rule")
+
+		if series == "" { // TODO: log error
+			continue
+		}
+
+		routes = append(routes, AnalyticsRoute{
+			Series:   series,
+			RuleName: ruleName,
+		})
+	}
+
+	return routes
+}
+
+// NotificationRoutes filters the LogRoutes and returns a list of NotificationRoutes structs
+func (l LogRoutes) NotificationRoutes() []NotificationRoute {
+	routes := []NotificationRoute{}
+
+	for _, route := range l {
+		tipe := getStringValue(route, "type")
+		if tipe != "notifications" {
+			continue
+		}
+
+		channel := getStringValue(route, "channel")
+		icon := getStringValue(route, "icon")
+		message := getStringValue(route, "message")
+		user := getStringValue(route, "user")
+		rule := getStringValue(route, "rule")
+
+		if channel == "" || message == "" { // TODO: log error
+			continue
+		}
+
+		if icon == "" {
+			icon = ":ghost:"
+		}
+		if user == "" {
+			user = "logging-pipeline"
+		}
+
+		routes = append(routes, NotificationRoute{
+			Channel:  channel,
+			Icon:     icon,
+			Message:  message,
+			User:     user,
+			RuleName: rule,
+		})
+	}
+
+	return routes
+}
+
+// AlertRoutes filters the LogRoutes and returns a list of AlertRoutes structs
+func (l LogRoutes) AlertRoutes() []AlertRoute {
+	routes := []AlertRoute{}
+
+	for _, route := range l {
+		tipe := getStringValue(route, "type")
+		if tipe != "alerts" {
+			continue
+		}
+
+		series := getStringValue(route, "series")
+		dimensions := getStringArray(route, "dimensions")
+		statType := getStringValue(route, "stat_type")
+		valueField := getStringValue(route, "value_field")
+		ruleName := getStringValue(route, "rule")
+
+		if series == "" { // TODO: log error
+			continue
+		}
+		if statType == "" {
+			statType = "counter"
+		}
+		if valueField == "" {
+			valueField = "value"
+		}
+
+		routes = append(routes, AlertRoute{
+			Series:     series,
+			Dimensions: dimensions,
+			StatType:   statType,
+			ValueField: valueField,
+			RuleName:   ruleName,
+		})
+	}
+
+	return routes
+}
+
+// KVMeta a struct that represents kv-meta data
+type KVMeta struct {
+	Team     string
+	Version  string
+	Language string
+	Routes   LogRoutes
+}
+
+// ExtractKVMeta returns a struct with available kv-meta data
+func ExtractKVMeta(kvlog map[string]interface{}) KVMeta {
+	tmp, ok := kvlog["_kvmeta"]
+	if !ok {
+		return KVMeta{}
+	}
+
+	kvmeta, ok := tmp.(map[string]interface{})
+	if !ok {
+		return KVMeta{}
+	}
+
+	kvRoutes := []map[string]interface{}{}
+
+	tmp, ok = kvmeta["routes"]
+	if ok {
+		routes, ok := tmp.([]map[string]interface{})
+		if ok {
+			kvRoutes = routes
+		}
+	}
+
+	return KVMeta{
+		Team:     getStringValue(kvmeta, "team"),
+		Version:  getStringValue(kvmeta, "kv_version"),
+		Language: getStringValue(kvmeta, "kv_language"),
+		Routes:   kvRoutes,
+	}
+}
+
 // ParseAndEnhance extracts fields from a log line, and does some post-processing to rename/add fields
 func ParseAndEnhance(line string, env string, stringifyNested bool, renameESReservedFields bool, minimumTimestamp time.Time) (map[string]interface{}, error) {
 	out := map[string]interface{}{}
