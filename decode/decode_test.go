@@ -528,20 +528,6 @@ func TestExtractKVMeta(t *testing.T) {
 			},
 		},
 		{
-			Description: "_kvmeta with no routes",
-			Team:        "green",
-			Version:     "three",
-			Language:    "tree",
-			Log: map[string]interface{}{
-				"hi": "hello!",
-				"_kvmeta": map[string]interface{}{
-					"team":        "green",
-					"kv_version":  "three",
-					"kv_language": "tree",
-				},
-			},
-		},
-		{
 			Description: "_kvmeta with metric routes",
 			Team:        "green",
 			Version:     "three",
