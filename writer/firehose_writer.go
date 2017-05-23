@@ -22,6 +22,7 @@ import (
 // FirehoseWriter is a KCL consumer that writes records to an AWS firehose
 type FirehoseWriter struct {
 	shardID                string
+	checkpointer           *kcl.Checkpointer
 	logFile                string
 	deployEnv              string
 	stringifyNested        bool
@@ -104,44 +105,15 @@ func NewFirehoseWriter(config FirehoseWriterConfig, limiter *rate.Limiter) (*Fir
 }
 
 // Initialize is called when the KCL starts a shard consumer (KCL interface)
-func (f *FirehoseWriter) Initialize(shardID string) error {
+func (f *FirehoseWriter) Initialize(shardID string, checkpointer *kcl.Checkpointer) error {
 	f.shardID = shardID
+	f.checkpointer = checkpointer
 	f.lastCheckpoint = time.Now()
 	return nil
 }
 
-func (f *FirehoseWriter) checkpoint(checkpointer kcl.Checkpointer, sequenceNumber *string, subSequenceNumber *int) {
-	for n := -1; n < f.checkpointRetries; n++ {
-		err := checkpointer.Checkpoint(sequenceNumber, subSequenceNumber)
-		if err == nil {
-			return
-		}
-
-		if cperr, ok := err.(kcl.CheckpointError); ok {
-			switch cperr.Error() {
-			case "ShutdownException":
-				fmt.Fprintf(os.Stderr, "Encountered shutdown exception, skipping checkpoint\n")
-				return
-			case "ThrottlingException":
-				fmt.Fprintf(os.Stderr, "Was throttled while checkpointing, will attempt again in %s", f.sleepDuration)
-			case "InvalidStateException":
-				fmt.Fprintf(os.Stderr, "MultiLangDaemon reported an invalid state while checkpointing\n")
-			default:
-				fmt.Fprintf(os.Stderr, "Encountered an error while checkpointing: %s", err)
-			}
-		}
-
-		if n == f.checkpointRetries {
-			fmt.Fprintf(os.Stderr, "Failed to checkpoint after %d attempts, giving up.\n", f.checkpointRetries)
-			return
-		}
-
-		time.Sleep(f.sleepDuration)
-	}
-}
-
 // ProcessRecords is called when the KCL passes records to the KCL consumer (KCL interface)
-func (f *FirehoseWriter) ProcessRecords(records []kcl.Record, checkpointer kcl.Checkpointer) error {
+func (f *FirehoseWriter) ProcessRecords(records []kcl.Record) error {
 	for _, record := range records {
 		// Wait until rate limiter permits one more record to be processed
 		f.rateLimiter.Wait(context.Background())
@@ -156,7 +128,7 @@ func (f *FirehoseWriter) ProcessRecords(records []kcl.Record, checkpointer kcl.C
 	// Checkpoint Kinesis stream
 	if time.Now().Sub(f.lastCheckpoint) > f.checkpointFreq {
 		largestSeq := f.largestSeqFlushed.String()
-		f.checkpoint(checkpointer, &largestSeq, &f.largestSubSeqFlushed)
+		f.checkpointer.CheckpointWithRetry(&largestSeq, &f.largestSubSeqFlushed, f.checkpointRetries)
 		f.lastCheckpoint = time.Now()
 		log.Printf(fmt.Sprintf("%s -- Received:%d Sent:%d Failed:%d\n", f.shardID, f.recvRecordCount, f.sentRecordCount, f.failedRecordCount))
 	}
@@ -193,11 +165,11 @@ func (f *FirehoseWriter) processRecord(record kcl.Record) error {
 }
 
 // Shutdown is called when the KCL wants to trigger a shutdown of the shard consumer (KCL interface)
-func (f *FirehoseWriter) Shutdown(checkpointer kcl.Checkpointer, reason string) error {
+func (f *FirehoseWriter) Shutdown(reason string) error {
 	if reason == "TERMINATE" {
 		fmt.Fprintf(os.Stderr, "Was told to terminate, will attempt to checkpoint.\n")
 		f.messageBatcher.Flush()
-		f.checkpoint(checkpointer, nil, nil)
+		f.checkpointer.Shutdown()
 	} else {
 		fmt.Fprintf(os.Stderr, "Shutting down due to failover. Reason: %s. Will not checkpoint.\n", reason)
 	}

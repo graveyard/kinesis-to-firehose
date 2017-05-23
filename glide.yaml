@@ -1,14 +1,9 @@
 package: github.com/Clever/kinesis-to-firehose
 import:
-- package: github.com/Clever/heka-clever-plugins
-  subpackages:
-  - aws
-  - batcher
 - package: github.com/aws/aws-sdk-go
 - package: golang.org/x/time
   subpackages:
   - rate
-- package: github.com/jeromer/syslogparser
 - package: github.com/Clever/syslogparser
 - package: golang.org/x/net
   subpackages:
