@@ -10,6 +10,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+const RFC3339Micro = "2006-01-02T15:04:05.999999-07:00"
+
 type Spec struct {
 	Title          string
 	Input          string
@@ -94,23 +96,21 @@ func TestKayveeDecoding(t *testing.T) {
 
 func TestSyslogDecoding(t *testing.T) {
 	// timestamps in Rsyslog_TraditionalFileFormat
-	secPrecision := "Jan 2 15:04:05"
-	logTime, err := time.Parse(secPrecision, "Oct 25 10:20:37")
+	logTime, err := time.Parse(time.Stamp, "Oct 25 10:20:37")
 	if err != nil {
 		t.Fatal(err)
 	}
 	// parsing assumes log is from the current year
 	logTime = logTime.AddDate(time.Now().Year(), 0, 0).UTC()
 
-	logTime2, err := time.Parse(secPrecision, "Apr  5 21:45:54")
+	logTime2, err := time.Parse(time.Stamp, "Apr  5 21:45:54")
 	if err != nil {
 		t.Fatal(err)
 	}
 	logTime2 = logTime2.AddDate(time.Now().Year(), 0, 0).UTC()
 
 	// timestamp in Rsyslog_FileFormat
-	msPrecision := "2006-01-02T15:04:05.999999-07:00"
-	logTime3, err := time.Parse(msPrecision, "2017-04-05T21:57:46.794862+00:00")
+	logTime3, err := time.Parse(RFC3339Micro, "2017-04-05T21:57:46.794862+00:00")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -199,8 +199,7 @@ type ParseAndEnhanceSpec struct {
 
 func TestParseAndEnhance(t *testing.T) {
 	// timestamp in Rsyslog_FileFormat
-	msPrecision := "2006-01-02T15:04:05.999999-07:00"
-	logTime3, err := time.Parse(msPrecision, "2017-04-05T21:57:46.794862+00:00")
+	logTime3, err := time.Parse(RFC3339Micro, "2017-04-05T21:57:46.794862+00:00")
 	if err != nil {
 		t.Fatal(err)
 	}
