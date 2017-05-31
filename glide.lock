@@ -1,8 +1,8 @@
-hash: d7b0a549c753cc15502fe26998850202eda04364248782ddfa6ac10d8ffe6349
-updated: 2017-05-18T00:53:33.600476459Z
+hash: ef06716cb3faf3a0ddde443d06129ceeb081b4389d60887af0e6c64705355d3b
+updated: 2017-05-23T00:11:59.819968002Z
 imports:
 - name: github.com/aws/aws-sdk-go
-  version: 819b71cf8430e434c1eee7e7e8b0f2b8870be899
+  version: 0b6039ef3d10c1eda49843ebf9773dcc5bba0169
   subpackages:
   - aws
   - aws/awserr
@@ -31,14 +31,9 @@ imports:
   - service/firehose/firehoseiface
   - service/sts
 - name: github.com/Clever/amazon-kinesis-client-go
-  version: 8da04c944f2059941358d76c124dd2dda88902b7
+  version: 92eaacfbf1d207d2753d22313b1c2dcc7593f132
   subpackages:
   - kcl
-- name: github.com/Clever/heka-clever-plugins
-  version: fd3e18929e81329237f543bdc2b63f214b618305
-  subpackages:
-  - aws
-  - batcher
 - name: github.com/Clever/syslogparser
   version: 93ab95f7ff16c9ef1f2d09bc37c0a0c31bad98ea
   subpackages:

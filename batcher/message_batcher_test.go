@@ -194,16 +194,21 @@ func TestUpdatingSequence(t *testing.T) {
 
 	t.Log("After AddMessage (seq=1), largestSeq = 1")
 	assert.NoError(batcher.AddMessage([]byte("abab"), "1", mockSubSequenceNumber))
+	sync.waitForFlush(time.Minute)
 	expected.SetInt64(1)
-	assert.True(expected.Cmp(batcher.largestSeq) == 0)
+	seq, _ := batcher.LargestSequencePair()
+	assert.True(expected.Cmp(seq) == 0)
 
 	t.Log("After AddMessage (seq=2), largestSeq = 2")
 	assert.NoError(batcher.AddMessage([]byte("cdcd"), "2", mockSubSequenceNumber))
+	sync.waitForFlush(time.Minute)
 	expected.SetInt64(2)
-	assert.True(expected.Cmp(batcher.largestSeq) == 0)
+	seq, _ = batcher.LargestSequencePair()
+	assert.True(expected.Cmp(seq) == 0)
 
 	t.Log("After AddMessage (seq=1), largestSeq = 2 -- not updated because lower")
 	assert.NoError(batcher.AddMessage([]byte("efef"), "1", mockSubSequenceNumber))
-	assert.True(expected.Cmp(batcher.largestSeq) == 0)
-
+	sync.waitForFlush(time.Minute)
+	seq, _ = batcher.LargestSequencePair()
+	assert.True(expected.Cmp(seq) == 0)
 }
