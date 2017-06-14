@@ -437,12 +437,12 @@ func TestGetContainerMeta(t *testing.T) {
 	assert.Error(err)
 
 	t.Log("Can parse a programname")
-	programname = `env--app/arn%3Aaws%3Aecs%3Aus-west-1%3A999988887777%3Atask%2Fabcd1234-1a3b-1a3b-1234-d76552f4b7ef`
+	programname = `env1--app2/arn%3Aaws%3Aecs%3Aus-west-1%3A589690932525%3Atask%2Fabcd1234-1a3b-1a3b-1234-d76552f4b7ef`
 	meta, err := getContainerMeta(programname, "", "", "")
 	assert.NoError(err)
 	assert.Equal(map[string]string{
-		"container_env":  "env",
-		"container_app":  "app",
+		"container_env":  "env1",
+		"container_app":  "app2",
 		"container_task": "abcd1234-1a3b-1a3b-1234-d76552f4b7ef",
 	}, meta)
 
@@ -452,7 +452,7 @@ func TestGetContainerMeta(t *testing.T) {
 	assert.NoError(err)
 	assert.Equal(map[string]string{
 		"container_env":  overrideEnv,
-		"container_app":  "app",
+		"container_app":  "app2",
 		"container_task": "abcd1234-1a3b-1a3b-1234-d76552f4b7ef",
 	}, meta)
 
@@ -461,7 +461,7 @@ func TestGetContainerMeta(t *testing.T) {
 	meta, err = getContainerMeta(programname, "", overrideApp, "")
 	assert.NoError(err)
 	assert.Equal(map[string]string{
-		"container_env":  "env",
+		"container_env":  "env1",
 		"container_app":  overrideApp,
 		"container_task": "abcd1234-1a3b-1a3b-1234-d76552f4b7ef",
 	}, meta)
@@ -471,8 +471,8 @@ func TestGetContainerMeta(t *testing.T) {
 	meta, err = getContainerMeta(programname, "", "", overrideTask)
 	assert.NoError(err)
 	assert.Equal(map[string]string{
-		"container_env":  "env",
-		"container_app":  "app",
+		"container_env":  "env1",
+		"container_app":  "app2",
 		"container_task": overrideTask,
 	}, meta)
 
