@@ -11,15 +11,14 @@ import (
 	"time"
 )
 
-// By setting up a CloudWatchLogs Subscription, we can get logs from one or more CW Logs streams into Kinesis.
-// However, these logs are combined in a different format than the other logs we read (effectively, one log per record).
-
+// LogEvent is a single log line within a LogEventBatch
 type LogEvent struct {
 	ID        string `json:"id"`
 	Timestamp int64  `json:"timestamp"`
 	Message   string `json:"message"`
 }
 
+// LogEventBatch is a batch of multiple log lines, read from a KinesisStream with a CWLogs subscription
 type LogEventBatch struct {
 	MessageType         string     `json:"messageType"`
 	Owner               string     `json:"owner"`
@@ -54,6 +53,7 @@ func Unpack(input string) (LogEventBatch, error) {
 	return dat, nil
 }
 
+// RFC3339Micro is the RFC3339 format in microseconds
 const RFC3339Micro = "2006-01-02T15:04:05.999999-07:00"
 
 const taskMeta = `([a-z0-9-]+)--([a-z0-9-]+)\/` + // env--app
@@ -62,6 +62,9 @@ const taskMeta = `([a-z0-9-]+)--([a-z0-9-]+)\/` + // env--app
 
 var taskRegex = regexp.MustCompile(taskMeta)
 
+// Split takes a LogEventBatch and separates into a slice of enriched log lines
+// Lines are enhanced by adding an Rsyslog prefix, which should be handled correctly by
+// the subsequent decoding logic.
 func Split(b LogEventBatch) []string {
 	out := []string{}
 
