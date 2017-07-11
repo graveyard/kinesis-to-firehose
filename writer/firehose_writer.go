@@ -14,6 +14,7 @@ import (
 	"github.com/Clever/amazon-kinesis-client-go/kcl"
 	"github.com/Clever/kinesis-to-firehose/batcher"
 	"github.com/Clever/kinesis-to-firehose/decode"
+	"github.com/Clever/kinesis-to-firehose/splitter"
 	"github.com/aws/aws-sdk-go/service/firehose"
 	iface "github.com/aws/aws-sdk-go/service/firehose/firehoseiface"
 	"golang.org/x/time/rate"
@@ -136,14 +137,45 @@ func (f *FirehoseWriter) ProcessRecords(records []kcl.Record) error {
 	return nil
 }
 
+// processRecord handles a single log line, which may be batched (from CWLogs Subscription)
 func (f *FirehoseWriter) processRecord(record kcl.Record) error {
-	// Base64 decode the record
-	data, err := base64.StdEncoding.DecodeString(record.Data)
+	// base64 decode
+	decoded, err := base64.StdEncoding.DecodeString(record.Data)
 	if err != nil {
 		return err
 	}
+	data := string(decoded)
 
-	fields, err := decode.ParseAndEnhance(string(data), f.deployEnv, f.stringifyNested, f.renameESReservedFields, f.minimumTimestamp)
+	// We handle two types of records:
+	// - records emitted from CWLogs Subscription
+	// - records emiited from KPL
+	if splitter.IsGzipped(data) {
+		// Process a batch of messages from a CWLogs Subscription
+		messages, err := splitter.GetMessagesFromGzippedInput(data)
+		if err != nil {
+			return err
+		}
+		var lastErr error = nil
+		for _, m := range messages {
+			// TODO: improve checkpointing. Currently, if any message from the CWLogs batched record is sent,
+			// then the whole record will be considered complete after the next checkpoint operation.
+			err := f.parseMessageAndPrepareToSend(m, record.SequenceNumber, record.SubSequenceNumber)
+			if err != nil {
+				lastErr = err
+			}
+		}
+		return lastErr
+	}
+
+	// Process a single message, from KPL
+	return f.parseMessageAndPrepareToSend(data, record.SequenceNumber, record.SubSequenceNumber)
+}
+
+// parseMessageAndPrepareToSend is called within processRecord.
+// - it first decodes and enriches the log line.
+// - it then adds that output to the messageBatcher, where it will eventually be sent to Firehose.
+func (f *FirehoseWriter) parseMessageAndPrepareToSend(message string, sequenceNumber string, subSequenceNumber int) error {
+	fields, err := decode.ParseAndEnhance(message, f.deployEnv, f.stringifyNested, f.renameESReservedFields, f.minimumTimestamp)
 	if err != nil {
 		return err
 	}
@@ -156,7 +188,7 @@ func (f *FirehoseWriter) processRecord(record kcl.Record) error {
 	// add newline after each record, so that json objects in firehose will apppear one per line
 	msg = append(msg, '\n')
 
-	err = f.messageBatcher.AddMessage(msg, record.SequenceNumber, record.SubSequenceNumber)
+	err = f.messageBatcher.AddMessage(msg, sequenceNumber, subSequenceNumber)
 	if err != nil {
 		return err
 	}
