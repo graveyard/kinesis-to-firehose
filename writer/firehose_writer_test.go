@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/Clever/amazon-kinesis-client-go/kcl"
+	"github.com/Clever/kinesis-to-firehose/writer/mock_firehoseiface"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 
@@ -17,7 +18,7 @@ import (
 func setupFirehoseWriter(t *testing.T) *FirehoseWriter {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
-	mockFirehoseAPI := NewMockFirehoseAPI(mockCtrl)
+	mockFirehoseAPI := mock_firehoseiface.NewMockFirehoseAPI(mockCtrl)
 	cfg := FirehoseWriterConfig{
 		FlushCount:     100,
 		FlushSize:      4 * 1024 * 1024, // 4 Mb

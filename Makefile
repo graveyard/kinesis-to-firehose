@@ -4,7 +4,7 @@ include golang.mk
 SHELL := /bin/bash
 JAR_DIR := jars
 PKG := github.com/Clever/kinesis-to-firehose
-PKGS := $(shell go list ./... | grep -v /vendor )
+PKGS := $(shell go list ./... | grep -v /vendor | grep -v /writer/mock_firehoseiface)
 .PHONY: download_jars run build
 
 URL_PREFIX := http://search.maven.org/remotecontent?filepath=

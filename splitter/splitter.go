@@ -28,6 +28,7 @@ type LogEventBatch struct {
 	LogEvents           []LogEvent `json:"logEvents"`
 }
 
+// IsGzipped returns whether or not a string is Gzipped (determined by looking for a Gzip byte prefix)
 func IsGzipped(s string) bool {
 	return strings.HasPrefix(s, "\x1f\x8b")
 }

@@ -155,7 +155,7 @@ func (f *FirehoseWriter) processRecord(record kcl.Record) error {
 		if err != nil {
 			return err
 		}
-		var lastErr error = nil
+		var lastErr error
 		for _, m := range messages {
 			// TODO: improve checkpointing. Currently, if any message from the CWLogs batched record is sent,
 			// then the whole record will be considered complete after the next checkpoint operation.
