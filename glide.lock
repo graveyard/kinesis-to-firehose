@@ -1,8 +1,8 @@
-hash: ef06716cb3faf3a0ddde443d06129ceeb081b4389d60887af0e6c64705355d3b
-updated: 2017-05-23T00:11:59.819968002Z
+hash: a28f945b06252925e893ff4de31607434e27d14afcac19169a6ec2039ee372ad
+updated: 2017-07-11T12:27:20.617364587-07:00
 imports:
 - name: github.com/aws/aws-sdk-go
-  version: 0b6039ef3d10c1eda49843ebf9773dcc5bba0169
+  version: 819b71cf8430e434c1eee7e7e8b0f2b8870be899
   subpackages:
   - aws
   - aws/awserr
@@ -39,13 +39,17 @@ imports:
   subpackages:
   - rfc3164
 - name: github.com/go-ini/ini
-  version: 6e4869b434bd001f6983749881c7ead3545887d8
+  version: d3de07a94d22b4a0972deb4b96d790c2c0ce8333
+- name: github.com/golang/mock
+  version: bd3c8e81be01eef76d4b503f5e687d2d1354d2d9
+  subpackages:
+  - gomock
 - name: github.com/jeromer/syslogparser
   version: 0e4ae46ea3f08de351074b643d649d5d00661a3c
 - name: github.com/jmespath/go-jmespath
-  version: bd40a432e4c76585ef6b72d3fd96fb9b6dc7b68d
+  version: 0b12d6b521d83fc7f755e7cfc1b1fbdd35a01a74
 - name: golang.org/x/net
-  version: a6577fac2d73be281a500b310739095313165611
+  version: 2e9cee70ee697e0a2ef894b560dda50dec7dff58
   subpackages:
   - context
 - name: golang.org/x/time

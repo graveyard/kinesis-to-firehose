@@ -11,3 +11,6 @@ import:
 - package: github.com/Clever/amazon-kinesis-client-go
   subpackages:
   - kcl
+- package: github.com/golang/mock
+  subpackages:
+  - gomock
