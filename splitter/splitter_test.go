@@ -12,7 +12,11 @@ import (
 
 func TestUnpacking(t *testing.T) {
 	input := "H4sIAAAAAAAAADWOTQuCQBRF/8ow6wj6ENRdhLXIClJoERKTvsZHOiPzxiLE/96YtTzcy72n4zUQCQnpuwEe8vXxkJ6O8XUfJclqG/EJ1y8FZkgq3RYvYfMy1pJcUGm5NbptXDZSYg2IekRqb5QbbCxqtcHKgiEeXrJvL3qCsgN2HIuxbtFpWFG7sdky8L1ZECwXc9+b/PUGgXPMfnrspxeydQn5A5VkJYjKlkzfWeGWUInhme1QASEx+qpNeZ/1H1PFPn3yAAAA"
-	output, err := Unpack(input)
+
+	decoded, err := b64.StdEncoding.DecodeString(input)
+	assert.NoError(t, err)
+
+	output, err := unpack(string(decoded))
 	assert.NoError(t, err)
 
 	expectedOutput := LogEventBatch{
@@ -85,7 +89,10 @@ func TestFullLoop(t *testing.T) {
 	packed, err := pack(leb)
 	assert.NoError(t, err)
 
-	output, err := Unpack(packed)
+	decoded, err := b64.StdEncoding.DecodeString(packed)
+	assert.NoError(t, err)
+
+	output, err := unpack(string(decoded))
 	assert.NoError(t, err)
 
 	assert.Equal(t, leb, output)
@@ -112,7 +119,7 @@ func TestSplit(t *testing.T) {
 			},
 		},
 	}
-	lines := Split(input)
+	lines := split(input)
 	expected := []string{
 		"2017-06-26T23:32:23.285001+00:00 aws-batch env--app/arn%3Aaws%3Aecs%3Aus-east-1%3A999988887777%3Atask%2F12345678-1234-1234-1234-555566667777[1]: some log line",
 		"2017-06-26T23:32:23.285001+00:00 aws-batch env--app/arn%3Aaws%3Aecs%3Aus-east-1%3A999988887777%3Atask%2F12345678-1234-1234-1234-555566667777[1]: another log line",

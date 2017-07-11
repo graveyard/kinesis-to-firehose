@@ -3,11 +3,11 @@ package splitter
 import (
 	"bytes"
 	"compress/gzip"
-	b64 "encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"regexp"
+	"strings"
 	"time"
 )
 
@@ -28,14 +28,23 @@ type LogEventBatch struct {
 	LogEvents           []LogEvent `json:"logEvents"`
 }
 
-// Unpack expects a base64 encoded + gzipped + json-stringified LogEventBatch
-func Unpack(input string) (LogEventBatch, error) {
-	decoded, err := b64.StdEncoding.DecodeString(input)
-	if err != nil {
-		return LogEventBatch{}, err
-	}
+func IsGzipped(s string) bool {
+	return strings.HasPrefix(s, "\x1f\x8b")
+}
 
-	gzipReader, err := gzip.NewReader(bytes.NewReader([]byte(decoded)))
+// GetMessagesFromGzippedInput takes a gzipped record from a CWLogs Subscription and splits it into a slice of messages.
+func GetMessagesFromGzippedInput(input string) ([]string, error) {
+	unpacked, err := unpack(input)
+	if err != nil {
+		fmt.Println("ERROR: " + err.Error())
+		return []string{}, err
+	}
+	return split(unpacked), nil
+}
+
+// Unpack expects a gzipped + json-stringified LogEventBatch
+func unpack(input string) (LogEventBatch, error) {
+	gzipReader, err := gzip.NewReader(bytes.NewReader([]byte(input)))
 	if err != nil {
 		return LogEventBatch{}, err
 	}
@@ -65,7 +74,7 @@ var taskRegex = regexp.MustCompile(taskMeta)
 // Split takes a LogEventBatch and separates into a slice of enriched log lines
 // Lines are enhanced by adding an Rsyslog prefix, which should be handled correctly by
 // the subsequent decoding logic.
-func Split(b LogEventBatch) []string {
+func split(b LogEventBatch) []string {
 	out := []string{}
 
 	env := "unknown"
