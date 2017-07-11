@@ -1,8 +1,8 @@
-hash: a28f945b06252925e893ff4de31607434e27d14afcac19169a6ec2039ee372ad
-updated: 2017-07-11T12:27:20.617364587-07:00
+hash: bc5a8d1d695541cd16cb222470300569660f4d5d7b942e7742afb4386592e044
+updated: 2017-07-11T14:13:07.006405285-07:00
 imports:
 - name: github.com/aws/aws-sdk-go
-  version: 819b71cf8430e434c1eee7e7e8b0f2b8870be899
+  version: ae53883b2478fd8e2bdca2748367d5b5fa27ca22
   subpackages:
   - aws
   - aws/awserr
@@ -20,6 +20,7 @@ imports:
   - aws/request
   - aws/session
   - aws/signer/v4
+  - internal/shareddefaults
   - private/protocol
   - private/protocol/json/jsonutil
   - private/protocol/jsonrpc
@@ -31,7 +32,7 @@ imports:
   - service/firehose/firehoseiface
   - service/sts
 - name: github.com/Clever/amazon-kinesis-client-go
-  version: 92eaacfbf1d207d2753d22313b1c2dcc7593f132
+  version: aef51b080132e3d935ef03ed168911cd75f21994
   subpackages:
   - kcl
 - name: github.com/Clever/syslogparser
@@ -39,33 +40,33 @@ imports:
   subpackages:
   - rfc3164
 - name: github.com/go-ini/ini
-  version: d3de07a94d22b4a0972deb4b96d790c2c0ce8333
+  version: 3d73f4b845efdf9989fffd4b4e562727744a34ba
 - name: github.com/golang/mock
-  version: bd3c8e81be01eef76d4b503f5e687d2d1354d2d9
+  version: 93f6609a15b7de76bd49259f1f9a6b58df358936
   subpackages:
   - gomock
 - name: github.com/jeromer/syslogparser
   version: 0e4ae46ea3f08de351074b643d649d5d00661a3c
 - name: github.com/jmespath/go-jmespath
-  version: 0b12d6b521d83fc7f755e7cfc1b1fbdd35a01a74
+  version: bd40a432e4c76585ef6b72d3fd96fb9b6dc7b68d
 - name: golang.org/x/net
-  version: 2e9cee70ee697e0a2ef894b560dda50dec7dff58
+  version: f01ecb60fe3835d80d9a0b7b2bf24b228c89260e
   subpackages:
   - context
 - name: golang.org/x/time
-  version: f51c12702a4d776e4c1fa9b0fabab841babae631
+  version: 8be79e1e0910c292df4e79c241bb7e8f7e725959
   subpackages:
   - rate
 testImports:
 - name: github.com/davecgh/go-spew
-  version: 6d212800a42e8ab5c146b8ace3490ee17e5225f9
+  version: 9fadf46324c4cfc36cc82310ca92ded38af91249
   subpackages:
   - spew
 - name: github.com/pmezard/go-difflib
-  version: d8ed2627bdf02c080bf22230dbb337003b7aba2d
+  version: 792786c7400a136282c1664665ae0a8db921c6c2
   subpackages:
   - difflib
 - name: github.com/stretchr/testify
-  version: 69483b4bd14f5845b5a1e55bca19e954e827f1d0
+  version: f6abca593680b2315d2075e0f5e2a9751e3f431a
   subpackages:
   - assert
