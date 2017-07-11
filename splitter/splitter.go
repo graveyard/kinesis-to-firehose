@@ -39,7 +39,7 @@ func GetMessagesFromGzippedInput(input string) ([]string, error) {
 		fmt.Println("ERROR: " + err.Error())
 		return []string{}, err
 	}
-	return split(unpacked), nil
+	return Split(unpacked), nil
 }
 
 // Unpack expects a gzipped + json-stringified LogEventBatch
@@ -74,7 +74,7 @@ var taskRegex = regexp.MustCompile(taskMeta)
 // Split takes a LogEventBatch and separates into a slice of enriched log lines
 // Lines are enhanced by adding an Rsyslog prefix, which should be handled correctly by
 // the subsequent decoding logic.
-func split(b LogEventBatch) []string {
+func Split(b LogEventBatch) []string {
 	out := []string{}
 
 	env := "unknown"
