@@ -100,11 +100,10 @@ func TestFullLoop(t *testing.T) {
 
 func TestSplit(t *testing.T) {
 	input := LogEventBatch{
-		MessageType: "DATA_MESSAGE",
-		Owner:       "123456789012",
-		LogGroup:    "/aws/batch/job",
-		LogStream:   "env--app/12345678-1234-1234-1234-555566667777/88889999-0000-aaaa-bbbb-ccccddddeeee",
-		// LogStream:           "environment--app",
+		MessageType:         "DATA_MESSAGE",
+		Owner:               "123456789012",
+		LogGroup:            "/aws/batch/job",
+		LogStream:           "env--app/12345678-1234-1234-1234-555566667777/88889999-0000-aaaa-bbbb-ccccddddeeee",
 		SubscriptionFilters: []string{"MySubscriptionFilter"},
 		LogEvents: []LogEvent{
 			{
