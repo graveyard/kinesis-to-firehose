@@ -119,6 +119,7 @@ func TestSyslogDecoding(t *testing.T) {
 	logTime3 = logTime3.UTC()
 
 	ts := int64(1498519943285)
+	prodEnv := false
 	oneLineFromCWLogs := splitter.Split(splitter.LogEventBatch{
 		MessageType:         "DATA_MESSAGE",
 		Owner:               "123456789012",
@@ -137,7 +138,7 @@ func TestSyslogDecoding(t *testing.T) {
 				Message:   "another log line",
 			},
 		},
-	})[0]
+	}, prodEnv)[0]
 	// See splitter for more explanation on this timestamp hackery
 	expectedLogTime := time.Unix(0, ts*int64(time.Millisecond)+int64(time.Microsecond)).UTC()
 
@@ -242,6 +243,7 @@ func TestParseAndEnhance(t *testing.T) {
 	logTime3 = logTime3.UTC()
 
 	ts := int64(1498519943285)
+	prodEnv := false
 	oneLineFromCWLogs := splitter.Split(splitter.LogEventBatch{
 		MessageType:         "DATA_MESSAGE",
 		Owner:               "123456789012",
@@ -260,7 +262,7 @@ func TestParseAndEnhance(t *testing.T) {
 				Message:   "another log line",
 			},
 		},
-	})[0]
+	}, prodEnv)[0]
 	// See splitter for more explanation on this timestamp hackery
 	expectedLogTime := time.Unix(0, ts*int64(time.Millisecond)+int64(time.Microsecond)).UTC()
 
@@ -472,7 +474,7 @@ func TestParseAndEnhance(t *testing.T) {
 			ExpectedError: nil,
 		},
 		ParseAndEnhanceSpec{
-			Title: "Foo",
+			Title: "Parses a message from CW Logs Subscription",
 			Input: ParseAndEnhanceInput{
 				Line: oneLineFromCWLogs,
 			},

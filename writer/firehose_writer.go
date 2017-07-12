@@ -151,7 +151,7 @@ func (f *FirehoseWriter) processRecord(record kcl.Record) error {
 	// - records emiited from KPL
 	if splitter.IsGzipped(data) {
 		// Process a batch of messages from a CWLogs Subscription
-		messages, err := splitter.GetMessagesFromGzippedInput(data)
+		messages, err := splitter.GetMessagesFromGzippedInput(data, f.deployEnv == "production")
 		if err != nil {
 			return err
 		}
