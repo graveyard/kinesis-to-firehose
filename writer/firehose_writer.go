@@ -149,26 +149,26 @@ func (f *FirehoseWriter) processRecord(record kcl.Record) error {
 	// We handle two types of records:
 	// - records emitted from CWLogs Subscription
 	// - records emiited from KPL
-	if splitter.IsGzipped(data) {
-		// Process a batch of messages from a CWLogs Subscription
-		messages, err := splitter.GetMessagesFromGzippedInput(data, f.deployEnv == "production")
-		if err != nil {
-			return err
-		}
-		var lastErr error
-		for _, m := range messages {
-			// TODO: improve checkpointing. Currently, if any message from the CWLogs batched record is sent,
-			// then the whole record will be considered complete after the next checkpoint operation.
-			err := f.parseMessageAndPrepareToSend(m, record.SequenceNumber, record.SubSequenceNumber)
-			if err != nil {
-				lastErr = err
-			}
-		}
-		return lastErr
+	if !splitter.IsGzipped(data) {
+		// Process a single message, from KPL
+		return f.parseMessageAndPrepareToSend(data, record.SequenceNumber, record.SubSequenceNumber)
 	}
 
-	// Process a single message, from KPL
-	return f.parseMessageAndPrepareToSend(data, record.SequenceNumber, record.SubSequenceNumber)
+	// Process a batch of messages from a CWLogs Subscription
+	messages, err := splitter.GetMessagesFromGzippedInput(data, f.deployEnv == "production")
+	if err != nil {
+		return err
+	}
+	var lastErr error
+	for _, m := range messages {
+		// TODO: improve checkpointing. Currently, if any message from the CWLogs batched record is sent,
+		// then the whole record will be considered complete after the next checkpoint operation.
+		err := f.parseMessageAndPrepareToSend(m, record.SequenceNumber, record.SubSequenceNumber)
+		if err != nil {
+			lastErr = err
+		}
+	}
+	return lastErr
 }
 
 // parseMessageAndPrepareToSend is called within processRecord.

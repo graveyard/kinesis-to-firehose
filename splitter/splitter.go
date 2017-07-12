@@ -37,7 +37,6 @@ func IsGzipped(s string) bool {
 func GetMessagesFromGzippedInput(input string, prodEnv bool) ([]string, error) {
 	unpacked, err := unpack(input)
 	if err != nil {
-		fmt.Println("ERROR: " + err.Error())
 		return []string{}, err
 	}
 	return Split(unpacked, prodEnv), nil
