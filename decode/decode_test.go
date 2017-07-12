@@ -6,7 +6,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Clever/kinesis-to-firehose/splitter"
 	"github.com/Clever/syslogparser"
+
 	"github.com/stretchr/testify/assert"
 )
 
@@ -116,6 +118,30 @@ func TestSyslogDecoding(t *testing.T) {
 	}
 	logTime3 = logTime3.UTC()
 
+	ts := int64(1498519943285)
+	prodEnv := false
+	oneLineFromCWLogs := splitter.Split(splitter.LogEventBatch{
+		MessageType:         "DATA_MESSAGE",
+		Owner:               "123456789012",
+		LogGroup:            "/aws/batch/job",
+		LogStream:           "env--app/12345678-1234-1234-1234-555566667777/88889999-0000-aaaa-bbbb-ccccddddeeee",
+		SubscriptionFilters: []string{"MySubscriptionFilter"},
+		LogEvents: []splitter.LogEvent{
+			{
+				ID:        "99999992379011144044923130086453437181614530551221780480",
+				Timestamp: ts,
+				Message:   "some log line",
+			},
+			{
+				ID:        "99999992387663833181953011865369295871402094815542181889",
+				Timestamp: ts,
+				Message:   "another log line",
+			},
+		},
+	}, prodEnv)[0]
+	// See splitter for more explanation on this timestamp hackery
+	expectedLogTime := time.Unix(0, ts*int64(time.Millisecond)+int64(time.Microsecond)).UTC()
+
 	specs := []Spec{
 		Spec{
 			Title: "Parses Rsyslog_TraditionalFileFormat with simple log body",
@@ -162,6 +188,17 @@ func TestSyslogDecoding(t *testing.T) {
 			ExpectedError: nil,
 		},
 		Spec{
+			Title: "Parses Logline from AWS Batch CWLogs Subscription",
+			Input: oneLineFromCWLogs,
+			ExpectedOutput: map[string]interface{}{
+				"timestamp":   expectedLogTime,
+				"hostname":    "aws-batch",
+				"programname": `env--app/arn%3Aaws%3Aecs%3Aus-east-1%3A999988887777%3Atask%2F12345678-1234-1234-1234-555566667777`,
+				"rawlog":      `some log line`,
+			},
+			ExpectedError: nil,
+		},
+		Spec{
 			Title:          "Fails to parse non-RSyslog log line",
 			Input:          `not rsyslog`,
 			ExpectedOutput: map[string]interface{}{},
@@ -204,6 +241,30 @@ func TestParseAndEnhance(t *testing.T) {
 		t.Fatal(err)
 	}
 	logTime3 = logTime3.UTC()
+
+	ts := int64(1498519943285)
+	prodEnv := false
+	oneLineFromCWLogs := splitter.Split(splitter.LogEventBatch{
+		MessageType:         "DATA_MESSAGE",
+		Owner:               "123456789012",
+		LogGroup:            "/aws/batch/job",
+		LogStream:           "env--app/12345678-1234-1234-1234-555566667777/88889999-0000-aaaa-bbbb-ccccddddeeee",
+		SubscriptionFilters: []string{"MySubscriptionFilter"},
+		LogEvents: []splitter.LogEvent{
+			{
+				ID:        "99999992379011144044923130086453437181614530551221780480",
+				Timestamp: ts,
+				Message:   "some log line",
+			},
+			{
+				ID:        "99999992387663833181953011865369295871402094815542181889",
+				Timestamp: ts,
+				Message:   "another log line",
+			},
+		},
+	}, prodEnv)[0]
+	// See splitter for more explanation on this timestamp hackery
+	expectedLogTime := time.Unix(0, ts*int64(time.Millisecond)+int64(time.Microsecond)).UTC()
 
 	specs := []ParseAndEnhanceSpec{
 		ParseAndEnhanceSpec{
@@ -409,6 +470,23 @@ func TestParseAndEnhance(t *testing.T) {
 				"container_app":  "app",
 				"container_task": "abcd1234-1a3b-1a3b-1234-d76552f4b7ef",
 				"kv__source":     "a",
+			},
+			ExpectedError: nil,
+		},
+		ParseAndEnhanceSpec{
+			Title: "Parses a message from CW Logs Subscription",
+			Input: ParseAndEnhanceInput{
+				Line: oneLineFromCWLogs,
+			},
+			ExpectedOutput: map[string]interface{}{
+				"timestamp":      expectedLogTime,
+				"hostname":       "aws-batch",
+				"programname":    `env--app/arn%3Aaws%3Aecs%3Aus-east-1%3A999988887777%3Atask%2F12345678-1234-1234-1234-555566667777`,
+				"rawlog":         `some log line`,
+				"env":            "deploy-env",
+				"container_env":  "env",
+				"container_app":  "app",
+				"container_task": "12345678-1234-1234-1234-555566667777",
 			},
 			ExpectedError: nil,
 		},

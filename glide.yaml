@@ -1,6 +1,10 @@
 package: github.com/Clever/kinesis-to-firehose
 import:
 - package: github.com/aws/aws-sdk-go
+  subpackages:
+  - aws/request
+  - aws
+  - service/firehose
 - package: golang.org/x/time
   subpackages:
   - rate
@@ -11,3 +15,6 @@ import:
 - package: github.com/Clever/amazon-kinesis-client-go
   subpackages:
   - kcl
+- package: github.com/golang/mock
+  subpackages:
+  - gomock
