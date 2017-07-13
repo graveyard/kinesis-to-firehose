@@ -32,6 +32,8 @@ jobs:
           name: "Deploy (master branch only)"
           command: |
             if [ "${CIRCLE_BRANCH}" == "master" ]; then
-              $HOME/ci-scripts/circleci/dapple-deploy $DAPPLE_URL $DAPPLE_USER $DAPPLE_PASS kinesis-to-firehose-log-archive
-              $HOME/ci-scripts/circleci/dapple-deploy $DAPPLE_URL $DAPPLE_USER $DAPPLE_PASS kinesis-to-firehose-log-search
+              $HOME/ci-scripts/circleci/dapple-deploy $DAPPLE_URL $DAPPLE_USER $DAPPLE_PASS kinesis-to-firehose-log-archive dev-infra no-confirm-deploy
+              $HOME/ci-scripts/circleci/dapple-deploy $DAPPLE_URL $DAPPLE_USER $DAPPLE_PASS kinesis-to-firehose-log-archive production no-confirm-deploy
+              $HOME/ci-scripts/circleci/dapple-deploy $DAPPLE_URL $DAPPLE_USER $DAPPLE_PASS kinesis-to-firehose-log-search dev-infra no-confirm-deploy
+              $HOME/ci-scripts/circleci/dapple-deploy $DAPPLE_URL $DAPPLE_USER $DAPPLE_PASS kinesis-to-firehose-log-search production no-confirm-deploy
             fi
