@@ -20,8 +20,6 @@ jobs:
       - store_artifacts:
           path: /tmp/test-results
           destination: benchmarks
-      - store_test_results:
-          path: /tmp/test-results
       - deploy:
           name: Publish Docker Image
           command: $HOME/ci-scripts/circleci/docker-publish $DOCKER_USER $DOCKER_PASS "$DOCKER_EMAIL" $DOCKER_ORG
