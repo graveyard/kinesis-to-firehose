@@ -1,7 +1,7 @@
 FROM openjdk:7-jre
 
-# install `make`
-RUN apt-get -y update && apt-get install -y -q build-essential
+# install make and mvn
+RUN apt-get -y update && apt-get install -y -q build-essential maven
 ADD golang.mk .
 ADD Makefile .
 RUN make download_jars
