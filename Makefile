@@ -28,7 +28,7 @@ endef
 export POM_XML_FOR_GETTING_DEPENDENT_JARS
 download_jars:
 	command -v mvn >/dev/null 2>&1 || { echo >&2 "Maven not installed. Install maven!"; exit 1; }
-	mkdir -p /tmp/kinesis-to-firehose
+	mkdir -p $(JAR_DIR)/ /tmp/kinesis-to-firehose
 	echo $$POM_XML_FOR_GETTING_DEPENDENT_JARS > /tmp/kinesis-to-firehose/pom.xml
 	cd /tmp/kinesis-to-firehose && mvn dependency:copy-dependencies
 	cp /tmp/kinesis-to-firehose/target/dependency/* $(JAR_DIR)/
