@@ -36,7 +36,7 @@ download_jars:
 all: test build
 
 build:
-	CGO_ENABLED=0 go build -installsuffix cgo -o build/consumer $(PKG)/cmd/consumer
+	CGO_ENABLED=0 go build -installsuffix cgo -o build/consumer $(PKG)
 
 $(GOPATH)/bin/glide:
 	@go get github.com/Masterminds/glide
@@ -69,8 +69,8 @@ run:
 	@docker run -v /tmp:/tmp --env-file=<(echo -e $(_ARKLOC_ENV_FILE)) kinesis-to-firehose
 
 test: $(PKGS)
-$(PKGS): golang-test-all-strict-deps
-	$(call golang-test-all-strict,$@)
+$(PKGS): golang-test-all-deps
+	$(call golang-test-all,$@)
 
 bench:
 	go test -bench=. github.com/Clever/kinesis-to-firehose/decode/
