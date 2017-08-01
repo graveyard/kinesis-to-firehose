@@ -71,6 +71,3 @@ run:
 test: $(PKGS)
 $(PKGS): golang-test-all-deps
 	$(call golang-test-all,$@)
-
-bench:
-	go test -bench=. github.com/Clever/kinesis-to-firehose/decode/
