@@ -31,11 +31,12 @@ func getEnvInt(envVar string) int {
 }
 
 func main() {
+	suffix := "." + time.Now().Format("2006-01-02T15:04:05") + ".log"
 	kbcConfig := kbc.Config{
 		BatchInterval: 10 * time.Second,
 		BatchCount:    500,
 		BatchSize:     4 * 1024 * 1024, // 4Mb
-		LogFile:       getEnv("LOG_FILE"),
+		LogFile:       getEnv("LOG_FILE") + suffix,
 		DeployEnv:     getEnv("_DEPLOY_ENV"),
 		ReadRateLimit: getEnvInt("READ_RATE_LIMIT"),
 	}
