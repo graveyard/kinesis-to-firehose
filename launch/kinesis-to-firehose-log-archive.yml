@@ -15,6 +15,7 @@ env:
 - MINIMUM_TIMESTAMP
 resources:
   cpu: 0.0  # no CPU to improve resource usage (https://clever.atlassian.net/browse/INFRA-2120)
+  soft_mem_limit: 0.9
   max_mem: 1.8
 shepherds:
 - nathan.leiby@clever.com
