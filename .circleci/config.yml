@@ -15,6 +15,7 @@ jobs:
       - run: make install_deps
       - run: make build
       - run: make test
+      - run: make download_jars
       - deploy:
           name: Publish Docker Image
           command: $HOME/ci-scripts/circleci/docker-publish $DOCKER_USER $DOCKER_PASS "$DOCKER_EMAIL" $DOCKER_ORG
