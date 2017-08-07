@@ -5,11 +5,8 @@ SHELL := /bin/bash
 PKG := github.com/Clever/kinesis-to-firehose
 PKGS := $(shell go list ./... | grep -v /vendor | grep -v /writer/mock_firehoseiface)
 .PHONY: download_jars run build
-
-KCL_VERSION := 1.7.2
 $(eval $(call golang-version-check,1.8))
 
-BINARY_NAME := kinesis-to-firehose
 TMP_DIR := ./tmp-jars
 JAR_DIR := ./jars/
 KCL_VERSION := 1.7.6
@@ -19,7 +16,7 @@ define POM_XML_FOR_GETTING_DEPENDENT_JARS
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.clever.kinesistofirehose</groupId>
-  <artifactId>kinesis-to-firehose</artifactId>
+  <artifactId>kinesis-consumer</artifactId>
   <version>1.0-SNAPSHOT</version>
   <dependencies>
     <dependency>
@@ -45,7 +42,7 @@ download_jars:
 all: test build
 
 build:
-	CGO_ENABLED=0 go build -a -installsuffix cgo
+	CGO_ENABLED=0 go build -a -installsuffix cgo -o kinesis-consumer
 
 $(GOPATH)/bin/glide:
 	@go get github.com/Masterminds/glide
