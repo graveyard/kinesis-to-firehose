@@ -105,7 +105,7 @@ func (f *FirehoseSender) SendBatch(batch [][]byte, tag string) error {
 	retries := 0
 	delay := 250
 	for *res.FailedPutCount != 0 {
-		log.WarnD("retry-filed-records", logger.M{
+		log.WarnD("retry-failed-records", logger.M{
 			"stream": tag, "failed-record-count": *res.FailedPutCount, "retries": retries,
 		})
 

@@ -12,7 +12,7 @@ sed -i "s/<REGION_NAME>/${KINESIS_AWS_REGION}/" consumer.properties
 sed -i "s/<APPLICATION_NAME>/${KINESIS_APPLICATION_NAME}/" consumer.properties
 sed -i "s/<INITIAL_POSITION>/${KINESIS_INITIAL_POSITION}/" consumer.properties
 
-# For running locally with an AIM role
+# For running locally with an IAM role
 if [ "$AWS_SHARED_CREDENTIALS_FILE" != "" ] ; then
     export AWS_CREDENTIAL_PROFILES_FILE=$AWS_SHARED_CREDENTIALS_FILE
 fi
