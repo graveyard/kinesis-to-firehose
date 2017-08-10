@@ -1,5 +1,7 @@
 FROM openjdk:7-jre
 
+WORKDIR /
+
 # install `make`
 RUN apt-get -y update && apt-get install -y -q build-essential
 
