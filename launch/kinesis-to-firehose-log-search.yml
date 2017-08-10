@@ -20,3 +20,6 @@ shepherds:
 - rafael.garcia@clever.com
 expose: []
 team: eng-infra
+autoscaling:
+  metric: cpu
+  metric_target: 20
