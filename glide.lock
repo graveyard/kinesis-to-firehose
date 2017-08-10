@@ -1,8 +1,8 @@
 hash: 298bfc2f5540d6488878d6eaf0907894bff886607bf22210f3766e186ad11212
-updated: 2017-08-01T00:06:48.519135616Z
+updated: 2017-08-10T21:30:57.691182363Z
 imports:
 - name: github.com/aws/aws-sdk-go
-  version: 5e436e55ac5eddc739f26a2a209b3f4248ee8e0e
+  version: d05c000e0b41647375a4093373eb1301e02c8a4e
   subpackages:
   - aws
   - aws/awserr
@@ -32,10 +32,10 @@ imports:
   - service/firehose/firehoseiface
   - service/sts
 - name: github.com/Clever/amazon-kinesis-client-go
-  version: 4c6d8453efd75d4140edc73959da735f6e72ef98
+  version: 16814bd597ce4df2cec08033842180f6cbbcc256
   subpackages:
   - batchconsumer
-  - batchconsumer/batcher
+  - batchconsumer/stats
   - decode
   - kcl
   - splitter
@@ -44,7 +44,7 @@ imports:
   subpackages:
   - rfc3164
 - name: github.com/go-ini/ini
-  version: 6e4869b434bd001f6983749881c7ead3545887d8
+  version: 3d73f4b845efdf9989fffd4b4e562727744a34ba
 - name: github.com/golang/mock
   version: 13f360950a79f5864a972c786a10a50e44b69541
   subpackages:
@@ -58,9 +58,9 @@ imports:
 - name: github.com/xeipuuv/gojsonreference
   version: e02fc20de94c78484cd5ffb007f8af96be030a45
 - name: github.com/xeipuuv/gojsonschema
-  version: ff0417f4272e480246b4507459b3f6ae721a87ac
+  version: 0c8571ac0ce161a5feb57375a9cdf148c98c0f70
 - name: golang.org/x/net
-  version: b336a971b799939dd16ae9b1df8334cb8b977c4d
+  version: 02ac38e2528ff4adea90f184d71a3faa04b4b1b0
   subpackages:
   - context
 - name: golang.org/x/time
@@ -73,7 +73,7 @@ imports:
   - logger
   - router
 - name: gopkg.in/yaml.v2
-  version: a3f3340b5840cee44f372bddb5880fcbc419b46a
+  version: 3b4ad1db5b2a649883ff3782f5f9f6fb52be71af
 testImports:
 - name: github.com/davecgh/go-spew
   version: 6d212800a42e8ab5c146b8ace3490ee17e5225f9
