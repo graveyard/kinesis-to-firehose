@@ -1,13 +1,13 @@
 FROM openjdk:7-jre
 
-# install make and mvn
-RUN apt-get -y update && apt-get install -y -q build-essential maven
-ADD golang.mk .
-ADD Makefile .
-RUN make download_jars
+WORKDIR /
 
-# build
+# install `make`
+RUN apt-get -y update && apt-get install -y -q build-essential
+
+ADD jars jars
 ADD consumer.properties.template .
-ADD ./build/consumer ./build/consumer
+ADD run_kcl.sh .
+ADD kinesis-consumer kinesis-consumer
 
-CMD ["make", "run_kinesis_consumer"]
+ENTRYPOINT ["/bin/bash", "./run_kcl.sh"]

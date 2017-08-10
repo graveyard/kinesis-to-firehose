@@ -8,13 +8,14 @@ env:
 - FIREHOSE_AWS_REGION
 - FIREHOSE_STREAM_NAME
 - LOG_FILE
-- RATE_LIMIT
+- READ_RATE_LIMIT
 - DEPLOY_ENV
 - STRINGIFY_NESTED
 - RENAME_ES_RESERVED_FIELDS
 - MINIMUM_TIMESTAMP
 resources:
   cpu: 0.0  # no CPU to improve resource usage (https://clever.atlassian.net/browse/INFRA-2120)
+  soft_mem_limit: 0.9
   max_mem: 1.8
 shepherds:
 - rafael.garcia@clever.com

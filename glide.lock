@@ -1,8 +1,8 @@
-hash: bc5a8d1d695541cd16cb222470300569660f4d5d7b942e7742afb4386592e044
-updated: 2017-07-11T14:13:07.006405285-07:00
+hash: 298bfc2f5540d6488878d6eaf0907894bff886607bf22210f3766e186ad11212
+updated: 2017-08-10T21:30:57.691182363Z
 imports:
 - name: github.com/aws/aws-sdk-go
-  version: ae53883b2478fd8e2bdca2748367d5b5fa27ca22
+  version: d05c000e0b41647375a4093373eb1301e02c8a4e
   subpackages:
   - aws
   - aws/awserr
@@ -32,9 +32,13 @@ imports:
   - service/firehose/firehoseiface
   - service/sts
 - name: github.com/Clever/amazon-kinesis-client-go
-  version: aef51b080132e3d935ef03ed168911cd75f21994
+  version: 16814bd597ce4df2cec08033842180f6cbbcc256
   subpackages:
+  - batchconsumer
+  - batchconsumer/stats
+  - decode
   - kcl
+  - splitter
 - name: github.com/Clever/syslogparser
   version: 93ab95f7ff16c9ef1f2d09bc37c0a0c31bad98ea
   subpackages:
@@ -42,31 +46,44 @@ imports:
 - name: github.com/go-ini/ini
   version: 3d73f4b845efdf9989fffd4b4e562727744a34ba
 - name: github.com/golang/mock
-  version: 93f6609a15b7de76bd49259f1f9a6b58df358936
+  version: 13f360950a79f5864a972c786a10a50e44b69541
   subpackages:
   - gomock
 - name: github.com/jeromer/syslogparser
   version: 0e4ae46ea3f08de351074b643d649d5d00661a3c
 - name: github.com/jmespath/go-jmespath
   version: bd40a432e4c76585ef6b72d3fd96fb9b6dc7b68d
+- name: github.com/xeipuuv/gojsonpointer
+  version: 6fe8760cad3569743d51ddbb243b26f8456742dc
+- name: github.com/xeipuuv/gojsonreference
+  version: e02fc20de94c78484cd5ffb007f8af96be030a45
+- name: github.com/xeipuuv/gojsonschema
+  version: 0c8571ac0ce161a5feb57375a9cdf148c98c0f70
 - name: golang.org/x/net
-  version: f01ecb60fe3835d80d9a0b7b2bf24b228c89260e
+  version: 02ac38e2528ff4adea90f184d71a3faa04b4b1b0
   subpackages:
   - context
 - name: golang.org/x/time
   version: 8be79e1e0910c292df4e79c241bb7e8f7e725959
   subpackages:
   - rate
+- name: gopkg.in/Clever/kayvee-go.v6
+  version: 096364e316a52652d3493be702d8105d8d01db84
+  subpackages:
+  - logger
+  - router
+- name: gopkg.in/yaml.v2
+  version: 3b4ad1db5b2a649883ff3782f5f9f6fb52be71af
 testImports:
 - name: github.com/davecgh/go-spew
-  version: 9fadf46324c4cfc36cc82310ca92ded38af91249
+  version: 6d212800a42e8ab5c146b8ace3490ee17e5225f9
   subpackages:
   - spew
 - name: github.com/pmezard/go-difflib
-  version: 792786c7400a136282c1664665ae0a8db921c6c2
+  version: d8ed2627bdf02c080bf22230dbb337003b7aba2d
   subpackages:
   - difflib
 - name: github.com/stretchr/testify
-  version: f6abca593680b2315d2075e0f5e2a9751e3f431a
+  version: 69483b4bd14f5845b5a1e55bca19e954e827f1d0
   subpackages:
   - assert
