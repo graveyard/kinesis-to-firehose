@@ -22,6 +22,7 @@ type FirehoseSender struct {
 	deployEnv              string
 	stringifyNested        bool
 	renameESReservedFields bool
+	filterESProxyLogs      bool
 	minimumTimestamp       time.Time
 	client                 iface.FirehoseAPI
 }
@@ -39,6 +40,9 @@ type FirehoseSenderConfig struct {
 	StringifyNested bool
 	// RenameESReservedFields will rename any field reserved by ES, e.g. _source, to kv__<field>, e.g. kv__source.
 	RenameESReservedFields bool
+	// FilterESProxyLogs will filter out non-kayvee logs from hapoxy-logs app.  This app proxies
+	// ES cluster queries.
+	FilterESProxyLogs bool
 	// MinimumTimestamp will reject any logs with a timestamp < MinimumTimestamp
 	MinimumTimestamp time.Time
 }
@@ -51,6 +55,7 @@ func NewFirehoseSender(config FirehoseSenderConfig) *FirehoseSender {
 		stringifyNested:        config.StringifyNested,
 		renameESReservedFields: config.RenameESReservedFields,
 		minimumTimestamp:       config.MinimumTimestamp,
+		filterESProxyLogs:      config.FilterESProxyLogs,
 	}
 
 	awsConfig := aws.NewConfig().WithRegion(config.FirehoseRegion).WithMaxRetries(10)
@@ -68,6 +73,11 @@ func (f *FirehoseSender) ProcessMessage(rawlog []byte) ([]byte, []string, error)
 	)
 	if err != nil {
 		return nil, nil, err
+	}
+
+	if f.filterESProxyLogs &&
+		fields["container_app"] == "haproxy-logs" && fields["type"] != "Kayvee" {
+		return nil, nil, kbc.ErrMessageIgnored
 	}
 
 	msg, err := json.Marshal(fields)
