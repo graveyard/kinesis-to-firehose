@@ -13,6 +13,7 @@ env:
 - STRINGIFY_NESTED
 - RENAME_ES_RESERVED_FIELDS
 - MINIMUM_TIMESTAMP
+- FILTER_ES_PROXY_LOGS
 resources:
   cpu: 0.0  # no CPU to improve resource usage (https://clever.atlassian.net/browse/INFRA-2120)
   soft_mem_limit: 0.9

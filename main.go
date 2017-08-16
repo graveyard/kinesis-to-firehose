@@ -48,6 +48,7 @@ func main() {
 		StreamName:             getEnv("FIREHOSE_STREAM_NAME"),
 		StringifyNested:        (os.Getenv("STRINGIFY_NESTED") == "true"),
 		RenameESReservedFields: (os.Getenv("RENAME_ES_RESERVED_FIELDS") == "true"),
+		FilterESProxyLogs:      (os.Getenv("FILTER_ES_PROXY_LOGS") == "true"),
 		MinimumTimestamp:       time.Unix(0, minTimestamp),
 	}
 
