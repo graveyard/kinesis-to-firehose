@@ -76,7 +76,7 @@ func (f *FirehoseSender) ProcessMessage(rawlog []byte) ([]byte, []string, error)
 	}
 
 	if f.filterESProxyLogs &&
-		fields["container_app"] == "haproxy-logs" && fields["type"] != "Kayvee" {
+		fields["container_app"] == "haproxy-logs" && fields["decoder_msg_type"] != "Kayvee" {
 		return nil, nil, kbc.ErrMessageIgnored
 	}
 
