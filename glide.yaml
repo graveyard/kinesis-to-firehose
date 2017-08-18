@@ -1,6 +1,7 @@
 package: github.com/Clever/kinesis-to-firehose
 import:
 - package: github.com/Clever/amazon-kinesis-client-go
+  version: master
   subpackages:
   - batchconsumer
   - decode
