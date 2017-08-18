@@ -37,13 +37,12 @@ func main() {
 		BatchCount:    500,
 		BatchSize:     4 * 1024 * 1024, // 4Mb
 		LogFile:       getEnv("LOG_FILE") + suffix,
-		DeployEnv:     getEnv("_DEPLOY_ENV"),
 		ReadRateLimit: getEnvInt("READ_RATE_LIMIT"),
 	}
 
 	minTimestamp := int64(getEnvInt("MINIMUM_TIMESTAMP") * int(time.Millisecond))
 	firehoseConfig := sender.FirehoseSenderConfig{
-		DeployEnv:              kbcConfig.DeployEnv,
+		DeployEnv:              getEnv("_DEPLOY_ENV"),
 		FirehoseRegion:         getEnv("FIREHOSE_AWS_REGION"),
 		StreamName:             getEnv("FIREHOSE_STREAM_NAME"),
 		StringifyNested:        (os.Getenv("STRINGIFY_NESTED") == "true"),
