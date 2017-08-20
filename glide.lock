@@ -1,5 +1,5 @@
 hash: 2046750b971b081d75389d721052bf790ff5e1cbf4e801ba9e941618c8a223dd
-updated: 2017-08-20T18:54:53.018350636Z
+updated: 2017-08-20T23:49:50.965818325Z
 imports:
 - name: github.com/aws/aws-sdk-go
   version: 3546c9128687af50e4bcedac5b1ffdd593db0c83
@@ -32,7 +32,7 @@ imports:
   - service/firehose/firehoseiface
   - service/sts
 - name: github.com/Clever/amazon-kinesis-client-go
-  version: 59a1fb7c1d1c961a729e659087e396fcd0d303c0
+  version: 7f39898b70c287c2ecdfa9f8d6fec28ed48485e0
   subpackages:
   - batchconsumer
   - batchconsumer/stats
