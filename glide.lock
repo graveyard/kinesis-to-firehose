@@ -1,8 +1,8 @@
 hash: 2046750b971b081d75389d721052bf790ff5e1cbf4e801ba9e941618c8a223dd
-updated: 2017-08-20T23:49:50.965818325Z
+updated: 2017-09-21T19:03:52.684724251Z
 imports:
 - name: github.com/aws/aws-sdk-go
-  version: 3546c9128687af50e4bcedac5b1ffdd593db0c83
+  version: 599f09b4d88b78336612acd62e94e6ae87334b4b
   subpackages:
   - aws
   - aws/awserr
@@ -32,7 +32,7 @@ imports:
   - service/firehose/firehoseiface
   - service/sts
 - name: github.com/Clever/amazon-kinesis-client-go
-  version: 7f39898b70c287c2ecdfa9f8d6fec28ed48485e0
+  version: 8d871591deb621daf514609758be5fff7cda90c7
   subpackages:
   - batchconsumer
   - batchconsumer/stats
@@ -44,7 +44,7 @@ imports:
   subpackages:
   - rfc3164
 - name: github.com/go-ini/ini
-  version: 20b96f641a5ea98f2f8619ff4f3e061cff4833bd
+  version: e7fea39b01aea8d5671f6858f0532f56e8bff3a5
 - name: github.com/golang/mock
   version: 13f360950a79f5864a972c786a10a50e44b69541
   subpackages:
@@ -54,13 +54,13 @@ imports:
 - name: github.com/jmespath/go-jmespath
   version: bd40a432e4c76585ef6b72d3fd96fb9b6dc7b68d
 - name: github.com/xeipuuv/gojsonpointer
-  version: e0fe6f68307607d540ed8eac07a342c33fa1b54a
+  version: 6fe8760cad3569743d51ddbb243b26f8456742dc
 - name: github.com/xeipuuv/gojsonreference
   version: e02fc20de94c78484cd5ffb007f8af96be030a45
 - name: github.com/xeipuuv/gojsonschema
-  version: e18f0065e8c148fcf567ac43a3f8f5b66ac0720b
+  version: 702b404897d4364af44dc8dcabc9815947942325
 - name: golang.org/x/net
-  version: a6577fac2d73be281a500b310739095313165611
+  version: 5602c733f70afc6dcec6766be0d5034d4c4f14de
   subpackages:
   - context
 - name: golang.org/x/time
@@ -68,12 +68,12 @@ imports:
   subpackages:
   - rate
 - name: gopkg.in/Clever/kayvee-go.v6
-  version: 096364e316a52652d3493be702d8105d8d01db84
+  version: e6f953eac5b9d8e41dff6587e0ae6d58b50da5c5
   subpackages:
   - logger
   - router
 - name: gopkg.in/yaml.v2
-  version: a5b47d31c556af34a302ce5d659e6fea44d90de0
+  version: cd8b52f8269e0feb286dfeef29f8fe4d5b397e0b
 testImports:
 - name: github.com/davecgh/go-spew
   version: 6d212800a42e8ab5c146b8ace3490ee17e5225f9
