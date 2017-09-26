@@ -34,7 +34,7 @@ func TestProcessRecord(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Contains(t, tags, sender.streamName)
 
-	sender.filterESProxyLogs = true
+	sender.isElasticsearch = true
 	msg = `2017-08-16T04:37:52.901092+00:00 ip-10-0-102-159 production--haproxy-logs/` +
 		`arn%3Aaws%3Aecs%3Aus-west-1%3A589690932525%3Atask%2F124cc8a5-0549-4149-922b-cd411b813d11` +
 		`[3252]:  {"timestamp":1502858272,"http_status":200,"request_method":"POST","request":"/` +
@@ -46,7 +46,7 @@ func TestProcessRecord(t *testing.T) {
 	assert.Error(t, err)
 	assert.Equal(t, kbc.ErrMessageIgnored, err)
 
-	sender.filterESProxyLogs = false
+	sender.isElasticsearch = false
 	msg = `2017-08-16T04:37:52.901092+00:00 ip-10-0-102-159 production--haproxy-logs/` +
 		`arn%3Aaws%3Aecs%3Aus-west-1%3A589690932525%3Atask%2F124cc8a5-0549-4149-922b-cd411b813d11` +
 		`[3252]:  {"timestamp":1502858272,"http_status":200,"request_method":"POST","request":"/` +
