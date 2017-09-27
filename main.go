@@ -40,15 +40,11 @@ func main() {
 		ReadRateLimit: getEnvInt("READ_RATE_LIMIT"),
 	}
 
-	minTimestamp := int64(getEnvInt("MINIMUM_TIMESTAMP") * int(time.Millisecond))
 	firehoseConfig := sender.FirehoseSenderConfig{
-		DeployEnv:              getEnv("_DEPLOY_ENV"),
-		FirehoseRegion:         getEnv("FIREHOSE_AWS_REGION"),
-		StreamName:             getEnv("FIREHOSE_STREAM_NAME"),
-		StringifyNested:        (os.Getenv("STRINGIFY_NESTED") == "true"),
-		RenameESReservedFields: (os.Getenv("RENAME_ES_RESERVED_FIELDS") == "true"),
-		FilterESProxyLogs:      (os.Getenv("FILTER_ES_PROXY_LOGS") == "true"),
-		MinimumTimestamp:       time.Unix(0, minTimestamp),
+		DeployEnv:       getEnv("_DEPLOY_ENV"),
+		FirehoseRegion:  getEnv("FIREHOSE_AWS_REGION"),
+		StreamName:      getEnv("FIREHOSE_STREAM_NAME"),
+		IsElasticsearch: (os.Getenv("IS_ELASTICSEARCH_CONSUMER") == "true"),
 	}
 
 	sender := sender.NewFirehoseSender(firehoseConfig)

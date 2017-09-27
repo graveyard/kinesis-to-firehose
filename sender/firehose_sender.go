@@ -2,6 +2,7 @@ package sender
 
 import (
 	"encoding/json"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -18,13 +19,10 @@ var log = logger.New("kinesis-to-firehose")
 
 // FirehoseSender is a KCL consumer that writes records to an AWS firehose
 type FirehoseSender struct {
-	streamName             string
-	deployEnv              string
-	stringifyNested        bool
-	renameESReservedFields bool
-	filterESProxyLogs      bool
-	minimumTimestamp       time.Time
-	client                 iface.FirehoseAPI
+	streamName      string
+	deployEnv       string
+	isElasticsearch bool
+	client          iface.FirehoseAPI
 }
 
 // FirehoseSenderConfig is the set of config options used in NewFirehoseWriter
@@ -36,26 +34,16 @@ type FirehoseSenderConfig struct {
 	FirehoseRegion string
 	// StreamName is the firehose stream name
 	StreamName string
-	// StringifyNested will take any nested JSON objects and send them as strings instead of JSON objects.
-	StringifyNested bool
-	// RenameESReservedFields will rename any field reserved by ES, e.g. _source, to kv__<field>, e.g. kv__source.
-	RenameESReservedFields bool
-	// FilterESProxyLogs will filter out non-kayvee logs from hapoxy-logs app.  This app proxies
-	// ES cluster queries.
-	FilterESProxyLogs bool
-	// MinimumTimestamp will reject any logs with a timestamp < MinimumTimestamp
-	MinimumTimestamp time.Time
+	// IsElasticsearch true if this consumer sends logs to elasticsearch
+	IsElasticsearch bool
 }
 
 // NewFirehoseSender creates a FirehoseSender
 func NewFirehoseSender(config FirehoseSenderConfig) *FirehoseSender {
 	f := &FirehoseSender{
-		streamName:             config.StreamName,
-		deployEnv:              config.DeployEnv,
-		stringifyNested:        config.StringifyNested,
-		renameESReservedFields: config.RenameESReservedFields,
-		minimumTimestamp:       config.MinimumTimestamp,
-		filterESProxyLogs:      config.FilterESProxyLogs,
+		streamName:      config.StreamName,
+		deployEnv:       config.DeployEnv,
+		isElasticsearch: config.IsElasticsearch,
 	}
 
 	awsConfig := aws.NewConfig().WithRegion(config.FirehoseRegion).WithMaxRetries(10)
@@ -65,19 +53,74 @@ func NewFirehoseSender(config FirehoseSenderConfig) *FirehoseSender {
 	return f
 }
 
+func (f *FirehoseSender) makeKeyESSafe(key string) string {
+	// ES doesn't like fields that start with underscores.
+	if []rune(key)[0] == '_' {
+		key = "kv_" + key
+	}
+
+	// ES doesn't handle keys with periods (.)
+	if strings.Contains(key, ".") {
+		key = strings.Replace(key, ".", "_", -1)
+	}
+
+	return key
+}
+
+func (f *FirehoseSender) makeESSafe(fields map[string]interface{}) map[string]interface{} {
+	for key, val := range fields {
+		safekey := f.makeKeyESSafe(key)
+		if safekey != key {
+			fields[safekey] = fields[key]
+			delete(fields, key)
+		}
+
+		// ES dynamic mappings get finnicky once you start sending nested objects.
+		// E.g., if one app sends a field for the first time as an object, then any log
+		// sent by another app containing that field /not/ as an object will fail.
+		// One solution is to decode nested objects as strings.
+		_, ismap := val.(map[string]interface{})
+		_, isarr := val.([]interface{})
+		if ismap || isarr {
+			bs, _ := json.Marshal(val)
+			fields[safekey] = string(bs)
+		}
+	}
+
+	return fields
+}
+
+func (f *FirehoseSender) addKVMetaFields(fields map[string]interface{}) map[string]interface{} {
+	if _, ok := fields["_kvmeta"]; !ok {
+		return fields
+	}
+
+	kvmeta := decode.ExtractKVMeta(fields)
+	fields["kv_routes"] = kvmeta.Routes.RuleNames()
+	fields["kv_team"] = kvmeta.Team
+	fields["kv_language"] = kvmeta.Language
+	fields["kv_version"] = kvmeta.Version
+	delete(fields, "_kvmeta")
+
+	return fields
+}
+
 // ProcessMessage processes messages
 func (f *FirehoseSender) ProcessMessage(rawlog []byte) ([]byte, []string, error) {
-	fields, err := decode.ParseAndEnhance(
-		string(rawlog), f.deployEnv, f.stringifyNested,
-		f.renameESReservedFields, f.minimumTimestamp,
-	)
+	fields, err := decode.ParseAndEnhance(string(rawlog), f.deployEnv)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	if f.filterESProxyLogs &&
-		fields["container_app"] == "haproxy-logs" && fields["decoder_msg_type"] != "Kayvee" {
-		return nil, nil, kbc.ErrMessageIgnored
+	if f.isElasticsearch {
+		// Ignore log lines from the elasticserch haproxy.  Otherwise a user's own search query will
+		// appear in the results
+		if fields["container_app"] == "haproxy-logs" && fields["decoder_msg_type"] != "Kayvee" {
+			return nil, nil, kbc.ErrMessageIgnored
+		}
+
+		fields = f.makeESSafe(fields)
+		fields = f.addKVMetaFields(fields)
 	}
 
 	msg, err := json.Marshal(fields)
