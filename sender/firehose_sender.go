@@ -119,8 +119,8 @@ func (f *FirehoseSender) ProcessMessage(rawlog []byte) ([]byte, []string, error)
 			return nil, nil, kbc.ErrMessageIgnored
 		}
 
-		fields = f.makeESSafe(fields)
 		fields = f.addKVMetaFields(fields)
+		fields = f.makeESSafe(fields)
 	}
 
 	msg, err := json.Marshal(fields)
