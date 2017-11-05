@@ -67,12 +67,14 @@ func TestMakeESSafe(t *testing.T) {
 		"no.dots.in.props":      "yes",
 		"no-nesting":            map[string]interface{}{"nested": "nest"},
 		"no-arrays":             []interface{}{"no", "array"},
+		"":                      "empty",
 	}
 	expected := map[string]interface{}{
 		"kv__no_prefix_underscore": "yes",
 		"no_dots_in_props":         "yes",
 		"no-nesting":               `{"nested":"nest"}`,
 		"no-arrays":                `["no","array"]`,
+		"":                         "empty",
 	}
 
 	assert.EqualValues(t, expected, sender.makeESSafe(fields))
