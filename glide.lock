@@ -1,8 +1,8 @@
 hash: 2046750b971b081d75389d721052bf790ff5e1cbf4e801ba9e941618c8a223dd
-updated: 2017-09-26T22:05:14.22484999Z
+updated: 2017-11-05T15:02:39.992184216Z
 imports:
 - name: github.com/aws/aws-sdk-go
-  version: c29655f010eb79efd3df33ea20bbebb4fc80af95
+  version: d46843b92a3a8e377d7fe24b4d70fca37f923d00
   subpackages:
   - aws
   - aws/awserr
@@ -68,7 +68,7 @@ imports:
   subpackages:
   - rate
 - name: gopkg.in/Clever/kayvee-go.v6
-  version: e6f953eac5b9d8e41dff6587e0ae6d58b50da5c5
+  version: e1e6fd8184162847c1123645e7058347a2fd3959
   subpackages:
   - logger
   - router
