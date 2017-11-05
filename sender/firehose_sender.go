@@ -55,7 +55,7 @@ func NewFirehoseSender(config FirehoseSenderConfig) *FirehoseSender {
 
 func (f *FirehoseSender) makeKeyESSafe(key string) string {
 	// ES doesn't like fields that start with underscores.
-	if []rune(key)[0] == '_' {
+	if len(key) > 0 && []rune(key)[0] == '_' {
 		key = "kv_" + key
 	}
 
