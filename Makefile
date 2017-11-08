@@ -5,7 +5,7 @@ SHELL := /bin/bash
 PKG := github.com/Clever/kinesis-to-firehose
 PKGS := $(shell go list ./... | grep -v /vendor | grep -v /writer/mock_firehoseiface)
 .PHONY: download_jars run build
-$(eval $(call golang-version-check,1.8))
+$(eval $(call golang-version-check,1.9))
 
 TMP_DIR := ./tmp-jars
 JAR_DIR := ./jars/
@@ -44,11 +44,7 @@ all: test build
 build:
 	CGO_ENABLED=0 go build -a -installsuffix cgo -o kinesis-consumer
 
-$(GOPATH)/bin/glide:
-	@go get github.com/Masterminds/glide
 
-install_deps: $(GOPATH)/bin/glide
-	@$(GOPATH)/bin/glide install
 
 run:
 	GOOS=linux GOARCH=amd64 make build
