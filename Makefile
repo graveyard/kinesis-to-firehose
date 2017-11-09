@@ -44,8 +44,6 @@ all: test build
 build:
 	CGO_ENABLED=0 go build -a -installsuffix cgo -o kinesis-consumer
 
-
-
 run:
 	GOOS=linux GOARCH=amd64 make build
 	docker build -t kinesis-to-firehose .
@@ -54,3 +52,6 @@ run:
 test: $(PKGS)
 $(PKGS): golang-test-all-deps
 	$(call golang-test-all,$@)
+
+install_deps: golang-dep-vendor-deps
+	$(call golang-dep-vendor)
