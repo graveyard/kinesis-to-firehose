@@ -119,6 +119,12 @@ func (f *FirehoseSender) ProcessMessage(rawlog []byte) ([]byte, []string, error)
 			return nil, nil, kbc.ErrMessageIgnored
 		}
 
+		// Ignore log lines from the kinesis-cloudtrail-consumer starting with SEVERE, since they
+		// are an unintended result of logging while using KCL
+		if fields["container_app"] == "kinesis-cloudtrail-consumer" && strings.HasPrefix(fields["rawlog"].(string), "SEVERE") {
+			return nil, nil, kbc.ErrMessageIgnored
+		}
+
 		fields = f.addKVMetaFields(fields)
 		fields = f.makeESSafe(fields)
 	}
