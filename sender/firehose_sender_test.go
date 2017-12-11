@@ -47,6 +47,17 @@ func TestProcessMessageForES(t *testing.T) {
 	assert.Error(t, err)
 	assert.Equal(t, kbc.ErrMessageIgnored, err)
 
+	sender.isElasticsearch = true
+	msg = `2017-08-16T04:37:52.901092+00:00 ip-10-0-102-159 production--kinesis-cloudtrail-consumer/` +
+		`arn%3Aaws%3Aecs%3Aus-west-1%3A589690932525%3Atask%2F124cc8a5-0549-4149-922b-cd411b813d11` +
+		`[3252]: SEVERE: Received error line from subprocess [{"awsRegion":"us-east-1","deploy_env"` +
+		`:"production","eventID":"93f997cc-e14e-4ca1-a5d1-9341c97da442","eventName":"GetBucketLocation"` +
+		`,"eventSource":"s3.amazonaws.com","eventTime":"2017-12-06T19:18:22Z","eventType":"AwsApiCall"}]` +
+		`for shard shardId-000000000000`
+	_, _, err = sender.ProcessMessage([]byte(msg))
+	assert.Error(t, err)
+	assert.Equal(t, kbc.ErrMessageIgnored, err)
+
 	sender.isElasticsearch = false
 	msg = `2017-08-16T04:37:52.901092+00:00 ip-10-0-102-159 production--haproxy-logs/` +
 		`arn%3Aaws%3Aecs%3Aus-west-1%3A589690932525%3Atask%2F124cc8a5-0549-4149-922b-cd411b813d11` +
