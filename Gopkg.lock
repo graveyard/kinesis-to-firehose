@@ -5,13 +5,7 @@
   branch = "master"
   name = "github.com/Clever/amazon-kinesis-client-go"
   packages = ["batchconsumer","batchconsumer/stats","decode","kcl","splitter"]
-  revision = "94aacdf8339bd2cc8400d3bcb323dc1bce2c8422"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/Clever/kinesis-to-firehose"
-  packages = ["sender","sender/mock_firehoseiface"]
-  revision = "a13300c075481ed5a56a226bd7f1f707a1c661dc"
+  revision = "bfe2ac0f6de9baa5c97f10dca0d85b99aa198dc2"
 
 [[projects]]
   branch = "master"
@@ -105,6 +99,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "343fe4b05e373919716b53a30200d09356a6b043996eacccab112e8a470989a7"
+  inputs-digest = "1fe94616f8721d758b17489fdd8b0e449859042f193a1c1b75638459bcbce6d7"
   solver-name = "gps-cdcl"
   solver-version = 1
