@@ -12,3 +12,4 @@ consumer.properties
 consumer.properties.bak
 
 vendor/
+bin/
