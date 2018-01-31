@@ -13,3 +13,5 @@ consumer.properties.bak
 
 vendor/
 bin/
+tmp-jars/
+kinesis-consumer
