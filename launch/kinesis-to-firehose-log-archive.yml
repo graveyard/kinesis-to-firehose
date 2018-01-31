@@ -12,9 +12,9 @@ env:
 - DEPLOY_ENV
 - IS_ELASTICSEARCH_CONSUMER
 resources:
-  cpu: 2.0
-  soft_mem_limit: 0.9
-  max_mem: 1.8
+  cpu: 1.0
+  soft_mem_limit: 1.1
+  max_mem: 2.0
 shepherds:
 - nathan.leiby@clever.com
 expose: []
