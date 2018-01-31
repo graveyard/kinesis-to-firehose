@@ -1,4 +1,4 @@
-FROM openjdk:7-jre
+FROM openjdk:8-jre
 
 WORKDIR /
 

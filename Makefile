@@ -8,8 +8,8 @@ PKGS := $(shell go list ./... | grep -v /vendor | grep -v /writer/mock_firehosei
 $(eval $(call golang-version-check,1.9))
 
 TMP_DIR := ./tmp-jars
-JAR_DIR := ./jars/
-KCL_VERSION := 1.7.6
+JAR_DIR := ./jars
+KCL_VERSION := 1.8.10
 
 define POM_XML_FOR_GETTING_DEPENDENT_JARS
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
