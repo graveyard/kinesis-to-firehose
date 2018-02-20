@@ -4,8 +4,23 @@
 [[projects]]
   branch = "master"
   name = "github.com/Clever/amazon-kinesis-client-go"
-  packages = ["batchconsumer","batchconsumer/stats","decode","kcl","splitter"]
+  packages = [
+    "batchconsumer",
+    "batchconsumer/stats",
+    "decode",
+    "kcl",
+    "splitter"
+  ]
   revision = "bfe2ac0f6de9baa5c97f10dca0d85b99aa198dc2"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/Clever/kinesis-to-firehose"
+  packages = [
+    "sender",
+    "sender/mock_firehoseiface"
+  ]
+  revision = "5e2768271dde795582cef1dce797d71ec4e83fba"
 
 [[projects]]
   branch = "master"
@@ -15,9 +30,38 @@
 
 [[projects]]
   name = "github.com/aws/aws-sdk-go"
-  packages = ["aws","aws/awserr","aws/awsutil","aws/client","aws/client/metadata","aws/corehandlers","aws/credentials","aws/credentials/ec2rolecreds","aws/credentials/endpointcreds","aws/credentials/stscreds","aws/defaults","aws/ec2metadata","aws/endpoints","aws/request","aws/session","aws/signer/v4","internal/shareddefaults","private/protocol","private/protocol/json/jsonutil","private/protocol/jsonrpc","private/protocol/query","private/protocol/query/queryutil","private/protocol/rest","private/protocol/xml/xmlutil","service/firehose","service/firehose/firehoseiface","service/sts"]
-  revision = "d46843b92a3a8e377d7fe24b4d70fca37f923d00"
-  version = "v1.12.22"
+  packages = [
+    "aws",
+    "aws/awserr",
+    "aws/awsutil",
+    "aws/client",
+    "aws/client/metadata",
+    "aws/corehandlers",
+    "aws/credentials",
+    "aws/credentials/ec2rolecreds",
+    "aws/credentials/endpointcreds",
+    "aws/credentials/stscreds",
+    "aws/defaults",
+    "aws/ec2metadata",
+    "aws/endpoints",
+    "aws/request",
+    "aws/session",
+    "aws/signer/v4",
+    "internal/sdkrand",
+    "internal/shareddefaults",
+    "private/protocol",
+    "private/protocol/json/jsonutil",
+    "private/protocol/jsonrpc",
+    "private/protocol/query",
+    "private/protocol/query/queryutil",
+    "private/protocol/rest",
+    "private/protocol/xml/xmlutil",
+    "service/firehose",
+    "service/firehose/firehoseiface",
+    "service/sts"
+  ]
+  revision = "63324a33d7e42a386c04d4daec764a3de243492e"
+  version = "v1.13.0"
 
 [[projects]]
   name = "github.com/davecgh/go-spew"
@@ -87,7 +131,11 @@
 
 [[projects]]
   name = "gopkg.in/Clever/kayvee-go.v6"
-  packages = [".","logger","router"]
+  packages = [
+    ".",
+    "logger",
+    "router"
+  ]
   revision = "e1e6fd8184162847c1123645e7058347a2fd3959"
   version = "v6.10.0"
 
@@ -99,6 +147,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "1fe94616f8721d758b17489fdd8b0e449859042f193a1c1b75638459bcbce6d7"
+  inputs-digest = "6360ed179ab2664cc9dbf714fc22ad62234da6c93283a7b42e48b1029cb814ec"
   solver-name = "gps-cdcl"
   solver-version = 1
