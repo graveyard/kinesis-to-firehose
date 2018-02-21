@@ -4,7 +4,13 @@
 [[projects]]
   branch = "master"
   name = "github.com/Clever/amazon-kinesis-client-go"
-  packages = ["batchconsumer","batchconsumer/stats","decode","kcl","splitter"]
+  packages = [
+    "batchconsumer",
+    "batchconsumer/stats",
+    "decode",
+    "kcl",
+    "splitter"
+  ]
   revision = "bfe2ac0f6de9baa5c97f10dca0d85b99aa198dc2"
 
 [[projects]]
@@ -15,9 +21,38 @@
 
 [[projects]]
   name = "github.com/aws/aws-sdk-go"
-  packages = ["aws","aws/awserr","aws/awsutil","aws/client","aws/client/metadata","aws/corehandlers","aws/credentials","aws/credentials/ec2rolecreds","aws/credentials/endpointcreds","aws/credentials/stscreds","aws/defaults","aws/ec2metadata","aws/endpoints","aws/request","aws/session","aws/signer/v4","internal/shareddefaults","private/protocol","private/protocol/json/jsonutil","private/protocol/jsonrpc","private/protocol/query","private/protocol/query/queryutil","private/protocol/rest","private/protocol/xml/xmlutil","service/firehose","service/firehose/firehoseiface","service/sts"]
-  revision = "d46843b92a3a8e377d7fe24b4d70fca37f923d00"
-  version = "v1.12.22"
+  packages = [
+    "aws",
+    "aws/awserr",
+    "aws/awsutil",
+    "aws/client",
+    "aws/client/metadata",
+    "aws/corehandlers",
+    "aws/credentials",
+    "aws/credentials/ec2rolecreds",
+    "aws/credentials/endpointcreds",
+    "aws/credentials/stscreds",
+    "aws/defaults",
+    "aws/ec2metadata",
+    "aws/endpoints",
+    "aws/request",
+    "aws/session",
+    "aws/signer/v4",
+    "internal/sdkrand",
+    "internal/shareddefaults",
+    "private/protocol",
+    "private/protocol/json/jsonutil",
+    "private/protocol/jsonrpc",
+    "private/protocol/query",
+    "private/protocol/query/queryutil",
+    "private/protocol/rest",
+    "private/protocol/xml/xmlutil",
+    "service/firehose",
+    "service/firehose/firehoseiface",
+    "service/sts"
+  ]
+  revision = "f9a6880d84e16e2a37055793e17164a228d637f4"
+  version = "v1.13.1"
 
 [[projects]]
   name = "github.com/davecgh/go-spew"
@@ -31,10 +66,14 @@
   version = "v1.27.0"
 
 [[projects]]
+  branch = "master"
   name = "github.com/golang/mock"
-  packages = ["gomock"]
-  revision = "13f360950a79f5864a972c786a10a50e44b69541"
-  version = "v1.0.0"
+  packages = [
+    "gomock",
+    "mockgen",
+    "mockgen/model"
+  ]
+  revision = "58cd061d09382b6011f84c1291ebe50ef2e25bab"
 
 [[projects]]
   branch = "master"
@@ -87,7 +126,11 @@
 
 [[projects]]
   name = "gopkg.in/Clever/kayvee-go.v6"
-  packages = [".","logger","router"]
+  packages = [
+    ".",
+    "logger",
+    "router"
+  ]
   revision = "e1e6fd8184162847c1123645e7058347a2fd3959"
   version = "v6.10.0"
 
@@ -99,6 +142,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "1fe94616f8721d758b17489fdd8b0e449859042f193a1c1b75638459bcbce6d7"
+  inputs-digest = "85c981b39abbea16c29030439485913b965e0c86e3b90618ccc2294d544f994a"
   solver-name = "gps-cdcl"
   solver-version = 1

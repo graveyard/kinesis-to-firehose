@@ -3,7 +3,7 @@ include golang.mk
 
 SHELL := /bin/bash
 PKG := github.com/Clever/kinesis-to-firehose
-PKGS := $(shell go list ./... | grep -v /vendor | grep -v /writer/mock_firehoseiface)
+PKGS := $(shell go list ./... | grep -v /vendor)
 .PHONY: download_jars run build
 $(eval $(call golang-version-check,1.9))
 
@@ -49,9 +49,13 @@ run:
 	docker build -t kinesis-to-firehose .
 	@docker run -v /tmp:/tmp --env-file=<(echo -e $(_ARKLOC_ENV_FILE)) kinesis-to-firehose
 
-test: $(PKGS)
+test: generate $(PKGS)
 $(PKGS): golang-test-all-deps
 	$(call golang-test-all,$@)
 
+generate:
+	go generate $(PKG)/mocks
+
 install_deps: golang-dep-vendor-deps
 	$(call golang-dep-vendor)
+	go build -o bin/mockgen ./vendor/github.com/golang/mock/mockgen
