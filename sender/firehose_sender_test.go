@@ -7,13 +7,13 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	kbc "github.com/Clever/amazon-kinesis-client-go/batchconsumer"
-	"github.com/Clever/kinesis-to-firehose/sender/mock_firehoseiface"
+	"github.com/Clever/kinesis-to-firehose/mocks"
 )
 
 func setupFirehoseSender(t *testing.T) *FirehoseSender {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
-	mockFirehoseAPI := mock_firehoseiface.NewMockFirehoseAPI(mockCtrl)
+	mockFirehoseAPI := mocks.NewMockFirehoseAPI(mockCtrl)
 	return &FirehoseSender{
 		streamName: "tester",
 		client:     mockFirehoseAPI,
