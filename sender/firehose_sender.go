@@ -119,9 +119,10 @@ func (f *FirehoseSender) ProcessMessage(rawlog []byte) ([]byte, []string, error)
 			return nil, nil, kbc.ErrMessageIgnored
 		}
 
-		// Ignore log lines from the kinesis-cloudtrail-consumer starting with SEVERE, since they
-		// are an unintended result of logging while using KCL
-		if fields["container_app"] == "kinesis-cloudtrail-consumer" && strings.HasPrefix(fields["rawlog"].(string), "SEVERE") {
+		// Ignore log lines from the kinesis consumers starting with SEVERE: Received error...,
+		// since they are an unintended result of logging while using KCL
+		if strings.HasPrefix(fields["container_app"].(string), "kinesis-") &&
+			strings.HasPrefix(fields["rawlog"].(string), "SEVERE: Received error line from subprocess") {
 			return nil, nil, kbc.ErrMessageIgnored
 		}
 
