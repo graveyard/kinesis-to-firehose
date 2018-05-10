@@ -2,6 +2,7 @@ package sender
 
 import (
 	"encoding/json"
+	"math/rand"
 	"strings"
 	"time"
 
@@ -105,6 +106,43 @@ func (f *FirehoseSender) addKVMetaFields(fields map[string]interface{}) map[stri
 	return fields
 }
 
+func (f *FirehoseSender) calcDropLogProbability(log map[string]interface{}) float64 {
+	logTime := log["timestamp"].(time.Time)
+	delay := time.Since(logTime).Seconds() - 120
+	if delay <= 0 { // Don't drop logs with less than 2 minute delay
+		return 0
+	}
+
+	level := log["level"].(string)
+	if level == "" {
+		level = "debug" // Treat unknown levels like "debug"
+
+		// Don't throw away panics and error messages
+		raw := strings.ToLower(log["rawlog"].(string))
+		if strings.Contains(raw, "panic") || strings.Contains(raw, "err") {
+			level = "critical"
+		}
+	}
+
+	var half_dropped float64 // the delay in which half the logs will be dropped
+	switch level {
+	case "error", "critical":
+		return 0 // Never drop error or critical levels
+	case "trace":
+		half_dropped = 600 // 10 minutes
+	default:
+		fallthrough // Treat unknown levels like "debug"
+	case "debug":
+		half_dropped = 1800 // 30 minutes
+	case "info":
+		half_dropped = 3600 // 60 minutes
+	case "warning":
+		half_dropped = 7200 // 120 minutes
+	}
+
+	return delay / (half_dropped + delay)
+}
+
 // ProcessMessage processes messages
 func (f *FirehoseSender) ProcessMessage(rawlog []byte) ([]byte, []string, error) {
 	fields, err := decode.ParseAndEnhance(string(rawlog), f.deployEnv)
@@ -124,6 +162,10 @@ func (f *FirehoseSender) ProcessMessage(rawlog []byte) ([]byte, []string, error)
 		if fields["container_app"] != nil && fields["rawlog"] != nil &&
 			strings.HasPrefix(fields["container_app"].(string), "kinesis-") &&
 			strings.HasPrefix(fields["rawlog"].(string), "SEVERE: Received error line from subprocess") {
+			return nil, nil, kbc.ErrMessageIgnored
+		}
+
+		if rand.Float64() < f.calcDropLogProbability(fields) {
 			return nil, nil, kbc.ErrMessageIgnored
 		}
 
