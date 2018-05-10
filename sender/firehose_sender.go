@@ -13,6 +13,7 @@ import (
 
 	kbc "github.com/Clever/amazon-kinesis-client-go/batchconsumer"
 	"github.com/Clever/amazon-kinesis-client-go/decode"
+	"github.com/Clever/kinesis-to-firehose/sender/stats"
 	"gopkg.in/Clever/kayvee-go.v6/logger"
 )
 
@@ -166,6 +167,7 @@ func (f *FirehoseSender) ProcessMessage(rawlog []byte) ([]byte, []string, error)
 		}
 
 		if rand.Float64() < f.calcDropLogProbability(fields) {
+			stats.LogDropped(fields) // Here for alerting
 			return nil, nil, kbc.ErrMessageIgnored
 		}
 
