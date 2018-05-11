@@ -31,7 +31,7 @@ func init() {
 				for k, v := range dropped {
 					tmp[k] = v
 				}
-				log.InfoD("drop-stats", tmp)
+				log.TraceD("drop-stats", tmp)
 
 				dropped = map[string]int{}
 				total = 0
