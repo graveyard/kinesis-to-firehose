@@ -1,0 +1,10 @@
+routes:
+  dropped-logs-alert:
+    matchers:
+      title: ["drop-stats"]
+    output:
+      type: "alerts"
+      series: "kinesis-to-firehose-log-search.drop-stats"
+      dimensions: []
+      stat_type: "gauge"
+      value_field: "total_dropped"

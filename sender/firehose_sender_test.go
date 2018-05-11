@@ -2,6 +2,7 @@ package sender
 
 import (
 	"testing"
+	"time"
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
@@ -146,4 +147,57 @@ func TestAddKVMetaFields(t *testing.T) {
 	assert.Equal("understanding", fields["kv_language"])
 	assert.Equal("kv-routes", fields["kv_version"])
 
+}
+
+func TestCalcDropLogProbability(t *testing.T) {
+	assert := assert.New(t)
+
+	type log map[string]interface{}
+
+	sender := setupFirehoseSender(t)
+
+	t.Log("Logs 30 seconds old shouldn't be dropped, regardless of level")
+	_30SecsAgo := time.Now().Add(-30 * time.Second)
+	prob := sender.calcDropLogProbability(log{"timestamp": _30SecsAgo, "level": "trace"})
+	assert.Zero(prob)
+	prob = sender.calcDropLogProbability(log{"timestamp": _30SecsAgo, "level": "debug"})
+	assert.Zero(prob)
+	prob = sender.calcDropLogProbability(log{"timestamp": _30SecsAgo, "level": "info"})
+	assert.Zero(prob)
+	prob = sender.calcDropLogProbability(log{"timestamp": _30SecsAgo, "level": "warning"})
+	assert.Zero(prob)
+	prob = sender.calcDropLogProbability(log{"timestamp": _30SecsAgo, "level": "error"})
+	assert.Zero(prob)
+	prob = sender.calcDropLogProbability(log{"timestamp": _30SecsAgo, "level": "critical"})
+	assert.Zero(prob)
+
+	t.Log("Log 3 minutes old might be dropped. Higher level is lower probability")
+	_3mAgo := time.Now().Add(-3 * time.Minute)
+	probTrace3m := sender.calcDropLogProbability(log{"timestamp": _3mAgo, "level": "trace"})
+	assert.True(probTrace3m > 0)
+	probDebug3m := sender.calcDropLogProbability(log{"timestamp": _3mAgo, "level": "debug"})
+	assert.True(probTrace3m > probDebug3m && probDebug3m > 0)
+	probInfo3m := sender.calcDropLogProbability(log{"timestamp": _3mAgo, "level": "info"})
+	assert.True(probDebug3m > probInfo3m && probInfo3m > 0)
+	probWarn3m := sender.calcDropLogProbability(log{"timestamp": _3mAgo, "level": "warning"})
+	assert.True(probInfo3m > probWarn3m && probWarn3m > 0)
+	probError3m := sender.calcDropLogProbability(log{"timestamp": _3mAgo, "level": "error"})
+	assert.True(probWarn3m > probError3m && probError3m > 0)
+	probCrit3m := sender.calcDropLogProbability(log{"timestamp": _3mAgo, "level": "critical"})
+	assert.Zero(probCrit3m)
+
+	t.Log("The older the log the higher probability")
+	_20mAgo := time.Now().Add(-20 * time.Minute)
+	probTrace20m := sender.calcDropLogProbability(log{"timestamp": _20mAgo, "level": "trace"})
+	assert.True(probTrace20m > probTrace3m)
+	probDebug20m := sender.calcDropLogProbability(log{"timestamp": _20mAgo, "level": "debug"})
+	assert.True(probDebug20m > probDebug3m)
+	probInfo20m := sender.calcDropLogProbability(log{"timestamp": _20mAgo, "level": "info"})
+	assert.True(probInfo20m > probInfo3m)
+	probWarn20m := sender.calcDropLogProbability(log{"timestamp": _20mAgo, "level": "warning"})
+	assert.True(probWarn20m > probWarn3m)
+	probError20m := sender.calcDropLogProbability(log{"timestamp": _20mAgo, "level": "error"})
+	assert.True(probError20m > probError3m)
+	probCrit20m := sender.calcDropLogProbability(log{"timestamp": _20mAgo, "level": "critical"})
+	assert.Zero(probCrit20m)
 }

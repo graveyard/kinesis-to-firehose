@@ -3,10 +3,12 @@ package main
 import (
 	"log"
 	"os"
+	"path"
 	"strconv"
 	"time"
 
 	kbc "github.com/Clever/amazon-kinesis-client-go/batchconsumer"
+	"gopkg.in/Clever/kayvee-go.v6/logger"
 
 	"github.com/Clever/kinesis-to-firehose/sender"
 )
@@ -31,6 +33,16 @@ func getEnvInt(envVar string) int {
 }
 
 func main() {
+	exePath, err := os.Executable()
+	if err != nil {
+		log.Fatal(err)
+	}
+	dir := path.Dir(exePath)
+	err = logger.SetGlobalRouting(path.Join(dir, "kvconfig.yml"))
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	suffix := "." + time.Now().Format("2006-01-02T15:04:05") + ".log"
 	kbcConfig := kbc.Config{
 		BatchInterval:  10 * time.Second,
