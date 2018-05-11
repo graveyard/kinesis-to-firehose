@@ -2,6 +2,7 @@ package sender
 
 import (
 	"encoding/json"
+	"math"
 	"math/rand"
 	"strings"
 	"time"
@@ -146,7 +147,7 @@ func (f *FirehoseSender) calcDropLogProbability(fields map[string]interface{}) f
 		half_dropped = 14400 // 240 minutes
 	}
 
-	return delay / (half_dropped + delay)
+	return 1 - math.Exp2(-delay/half_dropped)
 }
 
 // ProcessMessage processes messages
