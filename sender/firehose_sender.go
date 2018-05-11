@@ -107,22 +107,22 @@ func (f *FirehoseSender) addKVMetaFields(fields map[string]interface{}) map[stri
 	return fields
 }
 
-func (f *FirehoseSender) calcDropLogProbability(log map[string]interface{}) float64 {
-	logTime := log["timestamp"].(time.Time)
+func (f *FirehoseSender) calcDropLogProbability(fields map[string]interface{}) float64 {
+	logTime := fields["timestamp"].(time.Time)
 	delay := time.Since(logTime).Seconds() - 120
 	if delay <= 0 { // Don't drop logs with less than 2 minute delay
 		return 0
 	}
 
 	level := ""
-	if _, ok := log["level"]; ok {
-		level = log["level"].(string)
+	if _, ok := fields["level"]; ok {
+		level = fields["level"].(string)
 	}
 	if level == "" {
 		level = "debug" // Treat unknown levels like "debug"
 
 		// Don't throw away panics and error messages
-		raw := strings.ToLower(log["rawlog"].(string))
+		raw := strings.ToLower(fields["rawlog"].(string))
 		if strings.Contains(raw, "panic") || strings.Contains(raw, "err") {
 			level = "critical"
 		}
