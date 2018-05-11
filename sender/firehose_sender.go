@@ -116,9 +116,11 @@ func (f *FirehoseSender) calcDropLogProbability(fields map[string]interface{}) f
 	}
 
 	level := ""
-	if _, ok := fields["level"]; ok {
-		level = fields["level"].(string)
+	switch l := fields["level"].(type) {
+	case string:
+		level = l
 	}
+
 	if level == "" {
 		level = "debug" // Treat unknown levels like "debug"
 
