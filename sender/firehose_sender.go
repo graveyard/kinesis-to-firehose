@@ -130,7 +130,7 @@ func (f *FirehoseSender) calcDropLogProbability(fields map[string]interface{}) f
 
 	var half_dropped float64 // the delay in which half the logs will be dropped
 	switch level {
-	case "error", "critical":
+	case "critical":
 		return 0 // Never drop error or critical levels
 	case "trace":
 		half_dropped = 600 // 10 minutes
@@ -142,6 +142,8 @@ func (f *FirehoseSender) calcDropLogProbability(fields map[string]interface{}) f
 		half_dropped = 3600 // 60 minutes
 	case "warning":
 		half_dropped = 7200 // 120 minutes
+	case "error":
+		half_dropped = 14400 // 240 minutes
 	}
 
 	return delay / (half_dropped + delay)
