@@ -212,7 +212,7 @@ func (f *FirehoseSender) sendRecords(batch [][]byte, tag string) (
 func (f *FirehoseSender) SendBatch(batch [][]byte, tag string) error {
 	res, err := f.sendRecords(batch, tag)
 	if err != nil {
-		return kbc.CatastrophicSendBatchError{err.Error()}
+		return kbc.CatastrophicSendBatchError{ErrMessage: err.Error()}
 	}
 
 	retries := 0
@@ -235,7 +235,7 @@ func (f *FirehoseSender) SendBatch(batch [][]byte, tag string) error {
 
 		res, err = f.sendRecords(retryLogs, tag)
 		if err != nil {
-			return kbc.CatastrophicSendBatchError{err.Error()}
+			return kbc.CatastrophicSendBatchError{ErrMessage: err.Error()}
 		}
 		if retries > 4 {
 			return kbc.PartialSendBatchError{
