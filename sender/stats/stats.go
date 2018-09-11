@@ -43,7 +43,7 @@ func init() {
 func LogDropped(log map[string]interface{}) {
 	app, ok := log["container_app"].(string)
 	if !ok || app == "" {
-		app = "<unknown>"
+		app = "_UNKNOWN_"
 	}
 	level, ok := log["level"].(string)
 	if !ok || level == "" {
