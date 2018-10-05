@@ -125,7 +125,7 @@ func TestAddKVMetaFields(t *testing.T) {
 					"rule":        "last-call",
 					"series":      "doing-it-til-we-fall",
 					"dimensions":  []interface{}{"who", "where"},
-					"stat_type":   "guage",
+					"stat_type":   "gauge",
 					"value_field": "status",
 				},
 			},
