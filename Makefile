@@ -53,7 +53,7 @@ test: generate $(PKGS)
 $(PKGS): golang-test-all-deps
 	$(call golang-test-all,$@)
 
-generate:
+generate: install_deps
 	go generate $(PKG)/mocks
 
 install_deps: golang-dep-vendor-deps

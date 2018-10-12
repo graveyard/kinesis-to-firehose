@@ -23,9 +23,9 @@ func init() {
 		for {
 			select {
 			case d := <-queue:
-				dropped["app="+d.app] += 1
-				dropped["level="+d.level] += 1
-				total += 1
+				dropped["app="+d.app]++
+				dropped["level="+d.level]++
+				total++
 			case <-tick:
 				tmp := logger.M{"total_dropped": total}
 				for k, v := range dropped {
@@ -40,6 +40,7 @@ func init() {
 	}()
 }
 
+// LogDropped keeps a running count of the dropped logs grouped by app and log-level
 func LogDropped(log map[string]interface{}) {
 	app, ok := log["container_app"].(string)
 	if !ok || app == "" {

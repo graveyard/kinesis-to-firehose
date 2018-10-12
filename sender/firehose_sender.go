@@ -131,25 +131,25 @@ func (f *FirehoseSender) calcDropLogProbability(fields map[string]interface{}) f
 		}
 	}
 
-	var half_dropped float64 // the delay in which half the logs will be dropped
+	var halfDropped float64 // the delay in which half the logs will be dropped
 	switch level {
 	case "critical":
 		return 0 // Never drop error or critical levels
 	case "trace":
-		half_dropped = 600 // 10 minutes
+		halfDropped = 600 // 10 minutes
 	default:
 		fallthrough // Treat unknown levels like "debug"
 	case "debug":
-		half_dropped = 1800 // 30 minutes
+		halfDropped = 1800 // 30 minutes
 	case "info":
-		half_dropped = 3600 // 60 minutes
+		halfDropped = 3600 // 60 minutes
 	case "warning":
-		half_dropped = 7200 // 120 minutes
+		halfDropped = 7200 // 120 minutes
 	case "error":
-		half_dropped = 14400 // 240 minutes
+		halfDropped = 14400 // 240 minutes
 	}
 
-	return 1 - math.Exp2(-delay/half_dropped)
+	return 1 - math.Exp2(-delay/halfDropped)
 }
 
 // ProcessMessage processes messages
@@ -243,7 +243,7 @@ func (f *FirehoseSender) SendBatch(batch [][]byte, tag string) error {
 				FailedMessages: retryLogs,
 			}
 		}
-		retries += 1
+		retries++
 		delay *= 2
 	}
 

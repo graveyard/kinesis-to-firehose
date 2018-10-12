@@ -2,6 +2,14 @@
 
 Consumes records from Kinesis and writes to Firehose.
 
+## Makefile modification
+`make generate` depends on `install_deps`, which can be slow. Feel free
+to comment that out locally. Just avoid committing it so that people who
+clone the repo don't get into an unbuildable state.
+
+(If you get an error about `mocks/mockfirehose.go` being empty, delete
+the file, `make install_deps` and `make generate`.)
+
 ## Running the Consumer
 
 To build and run the consumer, set required env vars. Then run, `make run`.
