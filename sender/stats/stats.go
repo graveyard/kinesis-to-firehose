@@ -16,24 +16,28 @@ type datum struct {
 var queue = make(chan datum, 2)
 
 func init() {
-	dropped := map[string]int{}
+	droppedLogsByApp := map[string]int{}
+	droppedLogsByLevel := map[string]int{}
 	total := 0
 	tick := time.Tick(time.Minute)
 	go func() {
 		for {
 			select {
 			case d := <-queue:
-				dropped["app="+d.app]++
-				dropped["level="+d.level]++
+				droppedLogsByApp[d.app]++
+				droppedLogsByLevel[d.level]++
 				total++
 			case <-tick:
-				tmp := logger.M{"total_dropped": total}
-				for k, v := range dropped {
-					tmp[k] = v
+				tmp := logger.M{
+					"total_dropped": total,
+					"app_count":     len(droppedLogsByApp),
+					"apps":          droppedLogsByApp,
+					"level":         droppedLogsByLevel,
 				}
 				log.TraceD("drop-stats", tmp)
 
-				dropped = map[string]int{}
+				droppedLogsByApp = map[string]int{}
+				droppedLogsByLevel = map[string]int{}
 				total = 0
 			}
 		}
