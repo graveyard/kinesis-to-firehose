@@ -114,7 +114,7 @@ func (f *FirehoseSender) calcDropLogProbability(fields map[string]interface{}) f
 	// if delay <= 0 { // Don't drop logs with less than 1 minute delay
 	// 	return 0
 	// }
-	delay := time.Since(logTime).Seconds() + 120 // Force sampling
+	delay := time.Since(logTime).Seconds() + 600 // Force sampling.  Simulates 10mins of lag
 
 	level := ""
 	switch l := fields["level"].(type) {
