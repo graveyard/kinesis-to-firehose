@@ -110,10 +110,11 @@ func (f *FirehoseSender) addKVMetaFields(fields map[string]interface{}) map[stri
 
 func (f *FirehoseSender) calcDropLogProbability(fields map[string]interface{}) float64 {
 	logTime := fields["timestamp"].(time.Time)
-	delay := time.Since(logTime).Seconds() - 60
-	if delay <= 0 { // Don't drop logs with less than 1 minute delay
-		return 0
-	}
+	// delay := time.Since(logTime).Seconds() - 60
+	// if delay <= 0 { // Don't drop logs with less than 1 minute delay
+	// 	return 0
+	// }
+	delay := time.Since(logTime).Seconds() + 120 // Force sampling
 
 	level := ""
 	switch l := fields["level"].(type) {
