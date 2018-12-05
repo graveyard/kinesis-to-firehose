@@ -1,6 +1,4 @@
 env:
-- AWS_ACCESS_KEY_ID
-- AWS_SECRET_ACCESS_KEY
 - KINESIS_AWS_REGION
 - KINESIS_STREAM_NAME
 - KINESIS_APPLICATION_NAME
@@ -18,3 +16,10 @@ shepherds:
 - nathan.leiby@clever.com
 expose: []
 team: eng-infra
+aws:
+  dynamodb:
+    read:
+    - kinesis-to-firehose-log-archive
+    write:
+    - kinesis-to-firehose-log-archive
+  custom: true
