@@ -2,9 +2,6 @@ package sender
 
 import (
 	"encoding/json"
-	"math"
-	"math/rand"
-	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -14,7 +11,6 @@ import (
 
 	kbc "github.com/Clever/amazon-kinesis-client-go/batchconsumer"
 	"github.com/Clever/amazon-kinesis-client-go/decode"
-	"github.com/Clever/kinesis-to-firehose/sender/stats"
 	"gopkg.in/Clever/kayvee-go.v6/logger"
 )
 
@@ -22,10 +18,9 @@ var log = logger.New("kinesis-to-firehose")
 
 // FirehoseSender is a KCL consumer that writes records to an AWS firehose
 type FirehoseSender struct {
-	streamName      string
-	deployEnv       string
-	isElasticsearch bool
-	client          iface.FirehoseAPI
+	streamName string
+	deployEnv  string
+	client     iface.FirehoseAPI
 }
 
 // FirehoseSenderConfig is the set of config options used in NewFirehoseWriter
@@ -37,16 +32,13 @@ type FirehoseSenderConfig struct {
 	FirehoseRegion string
 	// StreamName is the firehose stream name
 	StreamName string
-	// IsElasticsearch true if this consumer sends logs to elasticsearch
-	IsElasticsearch bool
 }
 
 // NewFirehoseSender creates a FirehoseSender
 func NewFirehoseSender(config FirehoseSenderConfig) *FirehoseSender {
 	f := &FirehoseSender{
-		streamName:      config.StreamName,
-		deployEnv:       config.DeployEnv,
-		isElasticsearch: config.IsElasticsearch,
+		streamName: config.StreamName,
+		deployEnv:  config.DeployEnv,
 	}
 
 	awsConfig := aws.NewConfig().WithRegion(config.FirehoseRegion).WithMaxRetries(10)
@@ -56,131 +48,11 @@ func NewFirehoseSender(config FirehoseSenderConfig) *FirehoseSender {
 	return f
 }
 
-func (f *FirehoseSender) makeKeyESSafe(key string) string {
-	// ES doesn't like fields that start with underscores.
-	if len(key) > 0 && []rune(key)[0] == '_' {
-		key = "kv_" + key
-	}
-
-	// ES doesn't handle keys with periods (.)
-	if strings.Contains(key, ".") {
-		key = strings.Replace(key, ".", "_", -1)
-	}
-
-	return key
-}
-
-func (f *FirehoseSender) makeESSafe(fields map[string]interface{}) map[string]interface{} {
-	for key, val := range fields {
-		safekey := f.makeKeyESSafe(key)
-		if safekey != key {
-			fields[safekey] = fields[key]
-			delete(fields, key)
-		}
-
-		// ES dynamic mappings get finnicky once you start sending nested objects.
-		// E.g., if one app sends a field for the first time as an object, then any log
-		// sent by another app containing that field /not/ as an object will fail.
-		// One solution is to decode nested objects as strings.
-		_, ismap := val.(map[string]interface{})
-		_, isarr := val.([]interface{})
-		if ismap || isarr {
-			bs, _ := json.Marshal(val)
-			fields[safekey] = string(bs)
-		}
-	}
-
-	return fields
-}
-
-func (f *FirehoseSender) addKVMetaFields(fields map[string]interface{}) map[string]interface{} {
-	if _, ok := fields["_kvmeta"]; !ok {
-		return fields
-	}
-
-	kvmeta := decode.ExtractKVMeta(fields)
-	fields["kv_routes"] = kvmeta.Routes.RuleNames()
-	fields["kv_team"] = kvmeta.Team
-	fields["kv_language"] = kvmeta.Language
-	fields["kv_version"] = kvmeta.Version
-	delete(fields, "_kvmeta")
-
-	return fields
-}
-
-func (f *FirehoseSender) calcDropLogProbability(fields map[string]interface{}) float64 {
-	logTime := fields["timestamp"].(time.Time)
-	delay := time.Since(logTime).Seconds() - 60
-	if delay <= 0 { // Don't drop logs with less than 1 minute delay
-		return 0
-	}
-
-	level := ""
-	switch l := fields["level"].(type) {
-	case string:
-		level = l
-	}
-
-	if level == "" {
-		level = "debug" // Treat unknown levels like "debug"
-
-		// Don't throw away panics and error messages
-		raw := strings.ToLower(fields["rawlog"].(string))
-		if strings.Contains(raw, "panic") || strings.Contains(raw, "err") {
-			level = "critical"
-		}
-	}
-
-	var halfDropped float64 // the delay in which half the logs will be dropped
-	switch level {
-	case "critical":
-		return 0 // Never drop error or critical levels
-	case "trace":
-		halfDropped = 600 // 10 minutes
-	default:
-		fallthrough // Treat unknown levels like "debug"
-	case "debug":
-		halfDropped = 1800 // 30 minutes
-	case "info":
-		halfDropped = 3600 // 60 minutes
-	case "warning":
-		halfDropped = 7200 // 120 minutes
-	case "error":
-		halfDropped = 14400 // 240 minutes
-	}
-
-	return 1 - math.Exp2(-delay/halfDropped)
-}
-
 // ProcessMessage processes messages
 func (f *FirehoseSender) ProcessMessage(rawlog []byte) ([]byte, []string, error) {
 	fields, err := decode.ParseAndEnhance(string(rawlog), f.deployEnv)
 	if err != nil {
 		return nil, nil, err
-	}
-
-	if f.isElasticsearch {
-		// Ignore log lines from the elasticserch haproxy.  Otherwise a user's own search query will
-		// appear in the results
-		if fields["container_app"] == "haproxy-logs" && fields["decoder_msg_type"] != "Kayvee" {
-			return nil, nil, kbc.ErrMessageIgnored
-		}
-
-		// Ignore log lines from the kinesis consumers starting with SEVERE: Received error...,
-		// since they are an unintended result of logging while using KCL
-		if fields["container_app"] != nil && fields["rawlog"] != nil &&
-			strings.HasPrefix(fields["container_app"].(string), "kinesis-") &&
-			strings.HasPrefix(fields["rawlog"].(string), "SEVERE: Received error line from subprocess") {
-			return nil, nil, kbc.ErrMessageIgnored
-		}
-
-		if rand.Float64() < f.calcDropLogProbability(fields) {
-			stats.LogDropped(fields) // Here for alerting
-			return nil, nil, kbc.ErrMessageIgnored
-		}
-
-		fields = f.addKVMetaFields(fields)
-		fields = f.makeESSafe(fields)
 	}
 
 	msg, err := json.Marshal(fields)

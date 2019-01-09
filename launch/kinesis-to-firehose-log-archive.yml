@@ -10,7 +10,6 @@ env:
 - LOG_FILE
 - READ_RATE_LIMIT
 - DEPLOY_ENV
-- IS_ELASTICSEARCH_CONSUMER
 resources:
   cpu: 0.5
   soft_mem_limit: 1.1
