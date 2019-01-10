@@ -53,10 +53,9 @@ func main() {
 	}
 
 	firehoseConfig := sender.FirehoseSenderConfig{
-		DeployEnv:       getEnv("_DEPLOY_ENV"),
-		FirehoseRegion:  getEnv("FIREHOSE_AWS_REGION"),
-		StreamName:      getEnv("FIREHOSE_STREAM_NAME"),
-		IsElasticsearch: (os.Getenv("IS_ELASTICSEARCH_CONSUMER") == "true"),
+		DeployEnv:      getEnv("_DEPLOY_ENV"),
+		FirehoseRegion: getEnv("FIREHOSE_AWS_REGION"),
+		StreamName:     getEnv("FIREHOSE_STREAM_NAME"),
 	}
 
 	sender := sender.NewFirehoseSender(firehoseConfig)
