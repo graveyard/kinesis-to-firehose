@@ -47,7 +47,7 @@ build:
 run:
 	GOOS=linux GOARCH=amd64 make build
 	docker build -t kinesis-to-firehose .
-	@docker run -v /tmp:/tmp --env-file=<(echo -e $(_ARKLOC_ENV_FILE)) kinesis-to-firehose
+	@docker run -v /tmp:/tmp -v $(AWS_SHARED_CREDENTIALS_FILE):$(AWS_SHARED_CREDENTIALS_FILE) --env-file=<(echo -e $(_ARKLOC_ENV_FILE)) kinesis-to-firehose
 
 test: generate $(PKGS)
 $(PKGS): golang-test-all-deps
