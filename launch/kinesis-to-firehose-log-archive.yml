@@ -17,9 +17,4 @@ shepherds:
 expose: []
 team: eng-infra
 aws:
-  dynamodb:
-    read:
-    - kinesis-to-firehose-log-archive
-    write:
-    - kinesis-to-firehose-log-archive
   custom: true
