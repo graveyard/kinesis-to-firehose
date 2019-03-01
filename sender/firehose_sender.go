@@ -48,6 +48,8 @@ func NewFirehoseSender(config FirehoseSenderConfig) *FirehoseSender {
 	return f
 }
 
+func (f *FirehoseSender) Initialize(shardID string) {}
+
 // ProcessMessage processes messages
 func (f *FirehoseSender) ProcessMessage(rawlog []byte) ([]byte, []string, error) {
 	fields, err := decode.ParseAndEnhance(string(rawlog), f.deployEnv)
