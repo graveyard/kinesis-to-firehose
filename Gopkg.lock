@@ -11,7 +11,7 @@
     "kcl",
     "splitter"
   ]
-  revision = "6e45fa518bec79c63ede149760180e22572e2faf"
+  revision = "ebbd9e7a377eba17f085187f0f708ecb9b7a17de"
 
 [[projects]]
   branch = "master"
@@ -143,8 +143,8 @@
 [[projects]]
   name = "gopkg.in/yaml.v2"
   packages = ["."]
-  revision = "5420a8b6744d3b0345ab293f6fcba19c978f1183"
-  version = "v2.2.1"
+  revision = "51d6538a90f86fe93ac480b35f37b2be17fef232"
+  version = "v2.2.2"
 
 [solve-meta]
   analyzer-name = "dep"
