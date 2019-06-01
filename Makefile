@@ -5,7 +5,7 @@ SHELL := /bin/bash
 PKG := github.com/Clever/kinesis-to-firehose
 PKGS := $(shell go list ./... | grep -v /vendor)
 .PHONY: download_jars run build
-$(eval $(call golang-version-check,1.9))
+$(eval $(call golang-version-check,1.12))
 
 TMP_DIR := ./tmp-jars
 JAR_DIR := ./jars
