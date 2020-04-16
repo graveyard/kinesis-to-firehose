@@ -32,6 +32,8 @@ type FirehoseSenderConfig struct {
 	FirehoseRegion string
 	// StreamName is the firehose stream name
 	StreamName string
+	// Endpoint is the firehose endpoint to use
+	Endpoint string
 }
 
 // NewFirehoseSender creates a FirehoseSender
@@ -41,7 +43,10 @@ func NewFirehoseSender(config FirehoseSenderConfig) *FirehoseSender {
 		deployEnv:  config.DeployEnv,
 	}
 
-	awsConfig := aws.NewConfig().WithRegion(config.FirehoseRegion).WithMaxRetries(10)
+	awsConfig := aws.NewConfig().
+		WithRegion(config.FirehoseRegion).
+		WithMaxRetries(10).
+		WithEndpoint(config.Endpoint)
 	sess := session.Must(session.NewSession(awsConfig))
 	f.client = firehose.New(sess)
 
