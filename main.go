@@ -56,6 +56,7 @@ func main() {
 		DeployEnv:      getEnv("_DEPLOY_ENV"),
 		FirehoseRegion: getEnv("FIREHOSE_AWS_REGION"),
 		StreamName:     getEnv("FIREHOSE_STREAM_NAME"),
+		Endpoint:       getEnv("FIREHOSE_AWS_ENDPOINT"),
 	}
 
 	sender := sender.NewFirehoseSender(firehoseConfig)
