@@ -27,5 +27,3 @@ jobs:
     - run: make test
     - run: $HOME/ci-scripts/circleci/docker-publish $DOCKER_USER $DOCKER_PASS "$DOCKER_EMAIL" $DOCKER_ORG
     - run: $HOME/ci-scripts/circleci/catapult-publish $CATAPULT_URL $CATAPULT_USER $CATAPULT_PASS kinesis-to-firehose-log-archive
-    - run: if [ "${CIRCLE_BRANCH}" == "master" ]; then $HOME/ci-scripts/circleci/dapple-deploy $DAPPLE_URL $DAPPLE_USER $DAPPLE_PASS kinesis-to-firehose-log-archive dev-infra no-confirm-deploy; fi;
-    - run: if [ "${CIRCLE_BRANCH}" == "master" ]; then $HOME/ci-scripts/circleci/dapple-deploy $DAPPLE_URL $DAPPLE_USER $DAPPLE_PASS kinesis-to-firehose-log-archive production no-confirm-deploy; fi;
