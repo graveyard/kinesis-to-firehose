@@ -88,7 +88,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:ce56f74a4a68e66a7b40ba284f0628b707a1930afff00b82104c37bed63fb9b5"
+  digest = "1:4cd0581c6d51e68f2fcac11102185859e28dab2bf35b4698a8b472d10fa8b696"
   name = "github.com/golang/mock"
   packages = [
     "gomock",
@@ -96,7 +96,7 @@
     "mockgen/model",
   ]
   pruneopts = ""
-  revision = "22bbf0ddf08105dfa364d0a2fa619dfa71014af5"
+  revision = "11d9cab23e050dd7d3d6a595ca84348ffdb5add0"
 
 [[projects]]
   branch = "master"
@@ -154,6 +154,19 @@
   revision = "2c8e4be869c17540b336bab0ea18b8d73e6a28b7"
 
 [[projects]]
+  digest = "1:ba49944a3238ae8f163c85b6d01d2db51cd5b09807105a3cfaacbd414744ca82"
+  name = "golang.org/x/mod"
+  packages = [
+    "internal/lazyregexp",
+    "modfile",
+    "module",
+    "semver",
+  ]
+  pruneopts = ""
+  revision = "859b3ef565e237f9f1a0fb6b55385c497545680d"
+  version = "v0.3.0"
+
+[[projects]]
   branch = "master"
   digest = "1:9e548233d0dc00e74be262e54a9d1bbe7e4c19e5951083520261740e37daeb02"
   name = "golang.org/x/net"
@@ -168,6 +181,36 @@
   packages = ["rate"]
   pruneopts = ""
   revision = "fbb02b2291d28baffd63558aa44b4b56f178d650"
+
+[[projects]]
+  branch = "master"
+  digest = "1:794ec1041d519b4b0f9b2e1c94ae9500c39bf94c38ab83925236fe535b035f1f"
+  name = "golang.org/x/tools"
+  packages = [
+    "go/ast/astutil",
+    "imports",
+    "internal/event",
+    "internal/event/core",
+    "internal/event/keys",
+    "internal/event/label",
+    "internal/fastwalk",
+    "internal/gocommand",
+    "internal/gopathwalk",
+    "internal/imports",
+  ]
+  pruneopts = ""
+  revision = "b5fad4ed8dd65a3d7aae567b1f4e751b8ca72837"
+
+[[projects]]
+  branch = "master"
+  digest = "1:9d4ac09a835404ae9306c6e1493cf800ecbb0f3f828f4333b3e055de4c962eea"
+  name = "golang.org/x/xerrors"
+  packages = [
+    ".",
+    "internal",
+  ]
+  pruneopts = ""
+  revision = "9bdfabe68543c54f90421aeb9a60ef8061b5b544"
 
 [[projects]]
   digest = "1:c0e459576189f205788b83cce78feb1eb3e8a07f10b7d84cb4ba7855734ed6cb"
