@@ -3,7 +3,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:155affd6cb6eb499697b196bd7e6abf8c1926069e39945a2d01f7a0def51d9ce"
+  digest = "1:efd5752fc5c37e02b7623b2a329e98914e7b0c05669accbf34a3adb1e885509a"
   name = "github.com/Clever/amazon-kinesis-client-go"
   packages = [
     "batchconsumer",
@@ -13,7 +13,7 @@
     "splitter",
   ]
   pruneopts = ""
-  revision = "ebd1e0e39c74eec30edbe816df782465d29e9852"
+  revision = "b16af062fbc169e1feabc735f42d1918f725fe38"
 
 [[projects]]
   branch = "master"
