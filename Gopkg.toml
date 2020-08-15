@@ -1,4 +1,5 @@
 required = ["github.com/golang/mock/mockgen"]
+
 [[constraint]]
   branch = "master"
   name = "github.com/Clever/amazon-kinesis-client-go"
@@ -17,4 +18,4 @@ required = ["github.com/golang/mock/mockgen"]
 
 [[constraint]]
   name = "gopkg.in/Clever/kayvee-go.v6"
-  version = "6.23.0"
+  version = "6.24.0"
