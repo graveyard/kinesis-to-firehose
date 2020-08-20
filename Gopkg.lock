@@ -80,7 +80,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:4cd0581c6d51e68f2fcac11102185859e28dab2bf35b4698a8b472d10fa8b696"
+  digest = "1:c780fa078e06ffc83f0f8b721138a7d28f91d8800433291646d958917d533386"
   name = "github.com/golang/mock"
   packages = [
     "gomock",
@@ -88,7 +88,7 @@
     "mockgen/model",
   ]
   pruneopts = ""
-  revision = "11d9cab23e050dd7d3d6a595ca84348ffdb5add0"
+  revision = "7b53c4de32f63187e7047cb19e75c2ca4dd7d5cc"
 
 [[projects]]
   branch = "master"
